@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+
+{% block title %}Security Control Library | CyberGRC{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2.5rem;">
+  <!-- Header Bar -->
+  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.75rem;">
+    <div>
+      <div class="hero-pill" style="margin-bottom: 0.5rem;">
+        Module B &bull; Centralized Security Control Library
+      </div>
+      <h1 style="font-size: 2.1rem; font-weight: 800; letter-spacing: -0.02em;">
+        Organizational Security Controls
+      </h1>
+      <p style="color: var(--text-secondary); max-width: 750px; font-size: 0.92rem; margin-top: 0.25rem;">
+        Single source of truth for internal cybersecurity safeguards, implementation statuses, testing frequencies, and cross-framework mappings.
+      </p>
+    </div>
+
+    <div>
+      {% if user and user.role.value in ['ORG_ADMIN', 'GRC_ANALYST', 'PLATFORM_ADMIN'] %}
+      <button
+        onclick="openCreateModal()"
+        style="background: linear-gradient(135deg, var(--accent-cyan), var(--accent-indigo)); color: #fff; padding: 0.7rem 1.4rem; border-radius: var(--radius-sm); font-weight: 700; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3); transition: var(--transition-smooth);"
+        onmouseover="this.style.opacity='0.9'"
+        onmouseout="this.style.opacity='1'"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+        </svg>
+        New Security Control
+      </button>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Search and Filter Bar -->
+  <div class="status-section" style="padding: 1.25rem; margin-bottom: 2rem;">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+      <!-- Filter Tabs -->
+      <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+        <a href="/controls" class="badge-tag" style="padding: 0.45rem 0.85rem; border-radius: var(--radius-full); font-size: 0.8rem; {% if not active_status %}background: rgba(56, 189, 248, 0.2); color: #38bdf8; border-color: rgba(56, 189, 248, 0.4); font-weight: 700;{% endif %}">
+          All Controls ({{ status_counts.ALL }})
+        </a>
+        <a href="/controls?status_filter=IMPLEMENTED" class="badge-tag" style="padding: 0.45rem 0.85rem; border-radius: var(--radius-full); font-size: 0.8rem; {% if active_status == 'IMPLEMENTED' %}background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: rgba(16, 185, 129, 0.4); font-weight: 700;{% endif %}">
+          Implemented ({{ status_counts.IMPLEMENTED }})
+        </a>
+        <a href="/controls?status_filter=PARTIALLY_IMPLEMENTED" class="badge-tag" style="padding: 0.45rem 0.85rem; border-radius: var(--radius-full); font-size: 0.8rem; {% if active_status == 'PARTIALLY_IMPLEMENTED' %}background: rgba(245, 158, 11, 0.2); color: #fbbf24; border-color: rgba(245, 158, 11, 0.4); font-weight: 700;{% endif %}">
+          Partially Implemented ({{ status_counts.PARTIALLY_IMPLEMENTED }})
+        </a>
+        <a href="/controls?status_filter=NEEDS_IMPROVEMENT" class="badge-tag" style="padding: 0.45rem 0.85rem; border-radius: var(--radius-full); font-size: 0.8rem; {% if active_status == 'NEEDS_IMPROVEMENT' %}background: rgba(244, 63, 94, 0.2); color: #fda4af; border-color: rgba(244, 63, 94, 0.4); font-weight: 700;{% endif %}">
+          Needs Improvement ({{ status_counts.NEEDS_IMPROVEMENT }})
+        </a>
+      </div>
+
+      <!-- Search Box -->
+      <form method="GET" action="/controls" style="display: flex; gap: 0.5rem;">
+        <input
+          type="text"
+          name="search"
+          value="{{ search_query }}"
+          placeholder="Search controls..."
+          style="padding: 0.45rem 0.9rem; background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: var(--text-primary); font-size: 0.85rem; outline: none; width: 220px;"
+        >
+        <button
+          type="submit"
+          style="padding: 0.45rem 0.85rem; background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: var(--text-primary); cursor: pointer; font-size: 0.85rem;"
+        >
+          Search
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Controls Grid -->
+  {% if controls | length == 0 %}
+  <div class="glass-card" style="text-align: center; padding: 3rem;">
+    <h3 style="font-size: 1.2rem; color: var(--text-secondary); margin-bottom: 0.5rem;">No security controls found</h3>
+    <p style="color: var(--text-muted); font-size: 0.88rem;">Adjust your filter or search query.</p>
+  </div>
+  {% else %}
+  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(370px, 1fr)); gap: 1.5rem;">
+    {% for ctrl in controls %}
+    <div class="glass-card" style="display: flex; flex-direction: column; justify-content: space-between; padding: 1.75rem;">
+      <div>
+        <!-- Top Status & ID Row -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+          <span style="font-family: var(--font-mono); font-weight: 700; font-size: 0.92rem; color: var(--accent-cyan);">
+            {{ ctrl.control_id }}
+          </span>
+
+          {% if ctrl.implementation_status.value == 'IMPLEMENTED' %}
+          <span class="badge-tag" style="margin: 0; background: rgba(16, 185, 129, 0.15); color: #34d399; border-color: rgba(16, 185, 129, 0.3);">
+            Implemented
+          </span>
+          {% elif ctrl.implementation_status.value == 'PARTIALLY_IMPLEMENTED' %}
+          <span class="badge-tag" style="margin: 0; background: rgba(245, 158, 11, 0.15); color: #fbbf24; border-color: rgba(245, 158, 11, 0.3);">
+            Partially Implemented
+          </span>
+          {% elif ctrl.implementation_status.value == 'NEEDS_IMPROVEMENT' %}
+          <span class="badge-tag" style="margin: 0; background: rgba(244, 63, 94, 0.15); color: #fda4af; border-color: rgba(244, 63, 94, 0.3);">
+            Needs Improvement
+          </span>
+          {% else %}
+          <span class="badge-tag" style="margin: 0; background: rgba(100, 116, 139, 0.15); color: #cbd5e1; border-color: rgba(100, 116, 139, 0.3);">
+            Not Implemented
+          </span>
+          {% endif %}
+        </div>
+
+        <!-- Control Title -->
+        <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 0.6rem; line-height: 1.35;">
+          <a href="/controls/{{ ctrl.control_id }}" style="color: var(--text-primary);">
+            {{ ctrl.name }}
+          </a>
+        </h3>
+
+        <!-- Description -->
+        <p style="font-size: 0.86rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 1.25rem;">
+          {{ ctrl.description[:140] }}{% if ctrl.description | length > 140 %}...{% endif %}
+        </p>
+
+        <!-- Meta info -->
+        <div style="font-size: 0.8rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 0.35rem; margin-bottom: 1.25rem;">
+          <div>
+            <strong>Owner:</strong> {{ ctrl.owner.full_name if ctrl.owner else "Unassigned" }}
+          </div>
+          <div>
+            <strong>Testing Cadence:</strong> {{ ctrl.testing_frequency.value }}
+          </div>
+        </div>
+
+        <!-- Mapped Framework Tags -->
+        <div style="border-top: 1px solid var(--border-subtle); padding-top: 0.85rem; margin-bottom: 1.25rem;">
+          <div style="font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 700; margin-bottom: 0.5rem;">
+            Mapped Requirements ({{ ctrl.mappings | length }}):
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 0.35rem;">
+            {% for m in ctrl.mappings %}
+              {% if m.requirement.framework.code == 'SOC2' %}
+              <span class="badge-tag" style="margin: 0; color: #38bdf8; border-color: rgba(56, 189, 248, 0.3); font-size: 0.72rem;">
+                SOC2: {{ m.requirement.identifier }}
+              </span>
+              {% elif m.requirement.framework.code == 'ISO27001' %}
+              <span class="badge-tag" style="margin: 0; color: #c084fc; border-color: rgba(168, 85, 247, 0.3); font-size: 0.72rem;">
+                ISO: {{ m.requirement.identifier }}
+              </span>
+              {% else %}
+              <span class="badge-tag" style="margin: 0; color: #34d399; border-color: rgba(16, 185, 129, 0.3); font-size: 0.72rem;">
+                NIST: {{ m.requirement.identifier }}
+              </span>
+              {% endif %}
+            {% else %}
+              <span style="font-size: 0.75rem; color: var(--text-muted); font-style: italic;">No framework mappings yet</span>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Button -->
+      <div>
+        <a
+          href="/controls/{{ ctrl.control_id }}"
+          style="display: block; text-align: center; padding: 0.55rem; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600; color: var(--text-primary); transition: var(--transition-smooth);"
+          onmouseover="this.style.background='rgba(56, 189, 248, 0.1)'; this.style.borderColor='rgba(56, 189, 248, 0.3)'"
+          onmouseout="this.style.background='rgba(255, 255, 255, 0.04)'; this.style.borderColor='var(--border-subtle)'"
+        >
+          View Evidence & Testing &rarr;
+        </a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+
+<!-- Modal Dialog: Create Security Control -->
+<div id="createModal" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); backdrop-filter: var(--glass-blur); z-index: 200; align-items: center; justify-content: center; padding: 1.5rem;">
+  <div class="glass-card" style="width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; padding: 2rem;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.75rem;">
+      <h3 style="font-size: 1.3rem; font-weight: 700;">New Security Control</h3>
+      <button onclick="closeCreateModal()" style="background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
+    </div>
+
+    <form method="POST" action="/controls" style="display: flex; flex-direction: column; gap: 1.1rem;">
+      <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 1rem;">
+        <div>
+          <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.3rem;">Control ID</label>
+          <input type="text" name="control_id" required placeholder="CTL-SEC-01" style="width: 100%; padding: 0.65rem; background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; font-family: var(--font-mono); font-size: 0.9rem;">
+        </div>
+        <div>
+          <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.3rem;">Control Title</label>
+          <input type="text" name="name" required placeholder="Endpoint Detection & Response (EDR)" style="width: 100%; padding: 0.65rem; background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; font-size: 0.9rem;">
+        </div>
+      </div>
+
+      <div>
+        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.3rem;">Description & Safeguard Specifics</label>
+        <textarea name="description" required rows="3" placeholder="Describe the technical control, operational safeguard, and security intent..." style="width: 100%; padding: 0.65rem; background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; font-size: 0.9rem;"></textarea>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div>
+          <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.3rem;">Implementation Status</label>
+          <select name="implementation_status" style="width: 100%; padding: 0.65rem; background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; font-size: 0.9rem;">
+            <option value="NOT_IMPLEMENTED">Not Implemented</option>
+            <option value="PARTIALLY_IMPLEMENTED">Partially Implemented</option>
+            <option value="IMPLEMENTED" selected>Implemented</option>
+            <option value="NEEDS_IMPROVEMENT">Needs Improvement</option>
+          </select>
+        </div>
+        <div>
+          <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.3rem;">Testing Frequency</label>
+          <select name="testing_frequency" style="width: 100%; padding: 0.65rem; background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; font-size: 0.9rem;">
+            <option value="CONTINUOUS">Continuous</option>
+            <option value="MONTHLY">Monthly</option>
+            <option value="QUARTERLY" selected>Quarterly</option>
+            <option value="SEMI_ANNUALLY">Semi-Annually</option>
+            <option value="ANNUALLY">Annually</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.3rem;">Control Owner</label>
+        <select name="owner_id" style="width: 100%; padding: 0.65rem; background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; font-size: 0.9rem;">
+          {% for u in users %}
+          <option value="{{ u.id }}">{{ u.full_name }} ({{ u.role.value }})</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.3rem;">Evidence Requirements (Audit Artifacts)</label>
+        <textarea name="evidence_requirements" required rows="2" placeholder="Configuration export, policy document, or automated verification log required..." style="width: 100%; padding: 0.65rem; background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; font-size: 0.9rem;"></textarea>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1rem;">
+        <button type="button" onclick="closeCreateModal()" style="padding: 0.65rem 1.25rem; background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; cursor: pointer;">Cancel</button>
+        <button type="submit" style="padding: 0.65rem 1.25rem; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-indigo)); border: none; border-radius: var(--radius-sm); color: #fff; font-weight: 700; cursor: pointer;">Create Control</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openCreateModal() {
+  document.getElementById('createModal').style.display = 'flex';
+}
+function closeCreateModal() {
+  document.getElementById('createModal').style.display = 'none';
+}
+</script>
+{% endblock %}

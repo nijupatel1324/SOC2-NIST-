@@ -1,0 +1,152 @@
+# =============================================================================
+# Cybersecurity GRC & Compliance Management Platform
+# Docker Compose — Production-Ready Deployment Stack
+# =============================================================================
+# Services:
+#   grc_app    — FastAPI application (2 workers)
+#   postgres   — PostgreSQL 16 (persistent named volume)
+#   nginx      — Reverse proxy + TLS termination
+#   pgadmin    — Optional DBA UI (comment out in air-gapped envs)
+# =============================================================================
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL 16 — Primary Relational Database
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: grc_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-grc_platform}
+      POSTGRES_USER: ${POSTGRES_USER:-grc_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?err_missing_postgres_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - grc_internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-grc_user} -d ${POSTGRES_DB:-grc_platform}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # Security: do NOT expose 5432 to host in production — internal network only
+    # To access from host during development, uncomment:
+    # ports:
+    #   - "5432:5432"
+
+  # ---------------------------------------------------------------------------
+  # FastAPI Application — GRC Platform
+  # ---------------------------------------------------------------------------
+  grc_app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    container_name: grc_app
+    restart: unless-stopped
+    environment:
+      # Application
+      ENVIRONMENT: production
+      DEBUG: "false"
+      PROJECT_VERSION: "1.0.0"
+
+      # Database — use internal Docker DNS
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-grc_user}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-grc_platform}
+
+      # Cryptographic secrets — MUST be overridden via .env or secrets manager
+      SECRET_KEY: ${SECRET_KEY:?err_missing_secret_key}
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
+
+      # Evidence vault — mounted as named volume below
+      UPLOAD_DIR: /app/uploads
+      MAX_UPLOAD_SIZE_MB: ${MAX_UPLOAD_SIZE_MB:-25}
+      ALLOWED_EXTENSIONS: "pdf,png,jpg,jpeg,docx,xlsx,csv,txt"
+
+      # Cookie security — enforce HTTPS in production
+      COOKIE_SECURE: "true"
+      COOKIE_SAMESITE: strict
+
+      # Rate limiting
+      RATE_LIMIT_LOGIN_PER_MINUTE: ${RATE_LIMIT_LOGIN_PER_MINUTE:-5}
+    volumes:
+      - evidence_uploads:/app/uploads
+      - app_logs:/app/logs
+    networks:
+      - grc_internal
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    # Do NOT expose port directly — nginx terminates TLS externally
+    expose:
+      - "8000"
+
+  # ---------------------------------------------------------------------------
+  # Nginx — Reverse Proxy + TLS Termination
+  # ---------------------------------------------------------------------------
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: grc_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+    networks:
+      - grc_internal
+      - grc_external
+    depends_on:
+      - grc_app
+
+  # ---------------------------------------------------------------------------
+  # pgAdmin 4 — Database Management (disable in air-gapped / prod envs)
+  # ---------------------------------------------------------------------------
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: grc_pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@grc.local}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:?err_missing_pgadmin_password}
+    ports:
+      - "5050:80"
+    networks:
+      - grc_internal
+    profiles:
+      - tools   # Only started with: docker compose --profile tools up
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+
+# =============================================================================
+# Named Volumes — Persistent Data
+# =============================================================================
+volumes:
+  postgres_data:
+    driver: local
+  evidence_uploads:
+    driver: local
+  app_logs:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  grc_internal:
+    driver: bridge
+    internal: true        # No direct internet access for DB / app containers
+  grc_external:
+    driver: bridge        # Only nginx touches the external network

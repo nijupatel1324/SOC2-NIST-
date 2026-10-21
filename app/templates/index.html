@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+
+{% block title %}Cybersecurity GRC Platform | Architecture & Implementation{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+  <div class="hero-pill">
+    <span class="pulse-dot"></span>
+    All 10 Phases Complete — Production Ready 🚀
+  </div>
+  <h1 class="hero-title">Enterprise Cybersecurity GRC Platform</h1>
+  <p class="hero-subtitle">
+    Harmonizing Security Governance, Risk Quantification, and Control Mapping across <strong>SOC 2</strong>, <strong>ISO/IEC 27001:2022</strong>, and <strong>NIST CSF 2.0</strong>.
+  </p>
+</section>
+
+<!-- Live Diagnostics & System Health -->
+<section class="status-section">
+  <div class="section-header">
+    <div class="section-title">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="#38bdf8">
+        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h2v7H7zm4-3h2v10h-2zm4 6h2v4h-2z"/>
+      </svg>
+      Phase 2 Runtime Telemetry & Database State
+    </div>
+    <span class="badge-tag" style="color: #34d399; border-color: rgba(16, 185, 129, 0.4);">
+      Alembic Schema & Seeds Synced
+    </span>
+  </div>
+
+  <div class="metrics-row">
+    <div class="metric-box">
+      <div class="metric-label">Frameworks & Reqs</div>
+      <div class="metric-value" style="color: #38bdf8;">{{ stats.framework_count }} / {{ stats.requirement_count }}</div>
+      <div class="metric-sub">SOC 2 &bull; ISO 27001 &bull; NIST CSF</div>
+    </div>
+    <div class="metric-box">
+      <div class="metric-label">Controls Library</div>
+      <div class="metric-value" style="color: #34d399;">{{ stats.control_count }} Controls</div>
+      <div class="metric-sub">{{ stats.mapping_count }} Cross-Framework Mappings</div>
+    </div>
+    <div class="metric-box">
+      <div class="metric-label">Risk Register</div>
+      <div class="metric-value" style="color: #f59e0b;">{{ stats.risk_count }} Risks</div>
+      <div class="metric-sub">5x5 Matrix &bull; Inherent vs Residual</div>
+    </div>
+    <div class="metric-box">
+      <div class="metric-label">Active Findings (CAPA)</div>
+      <div class="metric-value" style="color: #f43f5e;">{{ stats.finding_count }} Open</div>
+      <div class="metric-sub">Demo: Missing MFA (FND-2026-001)</div>
+    </div>
+  </div>
+</section>
+
+<!-- Framework Triad Comparison Grid -->
+<section id="comparison">
+  <div style="text-align: center; margin-bottom: 2rem;">
+    <h2 style="font-size: 1.85rem; font-weight: 700; margin-bottom: 0.5rem;">The GRC Framework Triad</h2>
+    <p style="color: var(--text-secondary); max-width: 650px; margin: 0 auto;">
+      Three distinct methodologies with overlapping control objectives. Understanding their fundamental differences is essential for effective security governance.
+    </p>
+  </div>
+
+  <div class="framework-grid">
+    <!-- SOC 2 Card -->
+    <div class="glass-card framework-card soc2">
+      <span class="card-badge badge-soc2">AICPA Standard</span>
+      <h3 class="card-title">SOC 2 (TSC)</h3>
+      <p class="card-desc">
+        Attestation report designed for technology and cloud service providers storing customer data. Evaluates controls over time.
+      </p>
+      <ul class="card-features">
+        <li>
+          <svg viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>
+          5 Trust Services Criteria (Security mandatory)
+        </li>
+        <li>
+          <svg viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>
+          Type I (Point-in-time) vs Type II (3-12 mos period)
+        </li>
+        <li>
+          <svg viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>
+          Independent CPA / AICPA firm opinion
+        </li>
+      </ul>
+    </div>
+
+    <!-- ISO 27001 Card -->
+    <div class="glass-card framework-card iso27001">
+      <span class="card-badge badge-iso">International Standard</span>
+      <h3 class="card-title">ISO/IEC 27001:2022</h3>
+      <p class="card-desc">
+        Comprehensive global standard for establishing, implementing, maintaining, and continually improving an Information Security Management System (ISMS).
+      </p>
+      <ul class="card-features">
+        <li>
+          <svg viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>
+          Clauses 4-10 (ISMS Lifecycle & PDCA)
+        </li>
+        <li>
+          <svg viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>
+          Annex A: 93 controls in 4 themes (Org, People, Physical, Tech)
+        </li>
+        <li>
+          <svg viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>
+          Formal accredited Certification (3-year cycle)
+        </li>
+      </ul>
+    </div>
+
+    <!-- NIST CSF 2.0 Card -->
+    <div class="glass-card framework-card nist">
+      <span class="card-badge badge-nist">NIST Guidance (Voluntary)</span>
+      <h3 class="card-title">NIST CSF 2.0</h3>
+      <p class="card-desc">
+        Outcome-driven, flexible risk management taxonomy published by the U.S. National Institute of Standards and Technology.
+      </p>
+      <ul class="card-features">
+        <li>
+          <svg viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>
+          6 Functions: GOVERN, Identify, Protect, Detect, Respond, Recover
+        </li>
+        <li>
+          <svg viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>
+          Categories, Subcategories, and Implementation Tiers
+        </li>
+        <li>
+          <svg viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>
+          Voluntary benchmark (No official certification)
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- STRIDE Threat Model & Architecture Accordion -->
+<section id="threat-model" style="margin-bottom: 3.5rem;">
+  <div style="text-align: center; margin-bottom: 2rem;">
+    <h2 style="font-size: 1.85rem; font-weight: 700; margin-bottom: 0.5rem;">Application Architecture & Threat Model</h2>
+    <p style="color: var(--text-secondary); max-width: 700px; margin: 0 auto;">
+      A GRC platform holds the most sensitive risk and control gap findings of an organization. Our system architecture enforces defense-in-depth across the entire lifecycle.
+    </p>
+  </div>
+
+  <div class="info-accordion">
+    <!-- Architecture Info -->
+    <div class="info-pane">
+      <h3>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z"/></svg>
+        Multi-Layer Architecture
+      </h3>
+      <div style="margin-bottom: 1rem; font-size: 0.9rem; color: var(--text-secondary);">
+        <strong>Presentation:</strong> Semantic HTML5, Jinja2, Vanilla CSS with custom design tokens, JS micro-interactions.<br>
+        <strong>API / Application:</strong> FastAPI (async ASGI), Pydantic v2 schemas, Dependency Injection, RBAC middleware.<br>
+        <strong>Persistence:</strong> SQLAlchemy 2.x Declarative Models, Alembic migrations, Multi-tenant organization isolation.<br>
+        <strong>Storage:</strong> Isolated file vault, SHA-256 integrity checks, MIME-type and extension validation.
+      </div>
+      <div class="terminal-block">
+# Project Directory Structure (Clean Architecture)
+SOC2 vs NIST/
+├── app/
+│   ├── core/      # Config, Security, Logging, Headers
+│   ├── db/        # SQLAlchemy session & base models
+│   ├── models/    # Domain entities (Controls, Risks, Tests)
+│   ├── schemas/   # Pydantic validation schemas
+│   ├── api/       # REST endpoints & Jinja route handlers
+│   ├── services/  # Risk scoring, evidence validation, audit trails
+│   ├── static/    # CSS & JS assets
+│   └── templates/ # Jinja2 templates
+├── tests/         # Pytest automated test suite
+└── uploads/       # Quarantined private evidence vault
+      </div>
+    </div>
+
+    <!-- STRIDE Threat Model -->
+    <div class="info-pane">
+      <h3>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
+        STRIDE Threat Matrix (GRC Platform)
+      </h3>
+      <div style="font-size: 0.88rem; color: var(--text-secondary); display: flex; flex-direction: column; gap: 0.75rem;">
+        <div>
+          <strong style="color: #f87171;">Spoofing:</strong> User or auditor impersonation.
+          <br><span style="color: var(--text-muted);">&rarr; Mitigated via bcrypt password hashing, secure HttpOnly SameSite session cookies, JWT validation.</span>
+        </div>
+        <div>
+          <strong style="color: #fb923c;">Tampering:</strong> Manipulating control test results or evidence.
+          <br><span style="color: var(--text-muted);">&rarr; Mitigated via SHA-256 cryptographic hashes for all evidence files and append-only audit event logs.</span>
+        </div>
+        <div>
+          <strong style="color: #facc15;">Repudiation:</strong> User denies closing a risk or approving a test.
+          <br><span style="color: var(--text-muted);">&rarr; Mitigated via structured security event logging recording actor, timestamp, IP, and changes.</span>
+        </div>
+        <div>
+          <strong style="color: #38bdf8;">Information Disclosure:</strong> Cross-organization tenant leakage.
+          <br><span style="color: var(--text-muted);">&rarr; Mitigated via strict organization-level scoping enforced in every DB query and gated file streaming.</span>
+        </div>
+        <div>
+          <strong style="color: #c084fc;">Elevation of Privilege:</strong> Analyst executing admin actions.
+          <br><span style="color: var(--text-muted);">&rarr; Mitigated via 5-tier server-side RBAC dependencies evaluated per endpoint.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 10-Phase Roadmap -->
+<section id="phases" class="status-section">
+  <div class="section-header">
+    <div class="section-title">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="#a855f7">
+        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+      </svg>
+      Comprehensive 10-Phase Implementation Roadmap
+    </div>
+    <span class="badge-tag" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: rgba(16, 185, 129, 0.4);">
+      All 10 Phases Complete &bull; 76+ Automated Tests Passing
+    </span>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; font-size: 0.88rem;">
+    <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-sm); padding: 1rem;">
+      <strong style="color: #34d399;">&check; Phase 1: Foundation</strong>
+      <p style="color: var(--text-muted); margin-top: 0.25rem;">Architecture, STRIDE threat model, FastAPI core, settings, logging & health tests.</p>
+    </div>
+    <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-sm); padding: 1rem;">
+      <strong style="color: #34d399;">&check; Phase 2: Database Schema & Seeds</strong>
+      <p style="color: var(--text-muted); margin-top: 0.25rem;">SQLAlchemy 2.x models, Alembic migrations, seeded frameworks, controls, mappings, and demonstration finding.</p>
+    </div>
+    <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-sm); padding: 1rem;">
+      <strong style="color: #34d399;">&check; Phase 3: Auth & RBAC Isolation</strong>
+      <p style="color: var(--text-muted); margin-top: 0.25rem;">5 User roles, bcrypt passwords, HttpOnly sessions, rate limiting, and multi-tenant organization security.</p>
+    </div>
+    <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-sm); padding: 1rem;">
+      <strong style="color: #34d399;">&check; Phase 4: Framework Comparison & Controls</strong>
+      <p style="color: var(--text-muted); margin-top: 0.25rem;">Comparative intelligence matrix, deep-dives, overlaps, and full CRUD security control catalog.</p>
+    </div>
+    <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-sm); padding: 1rem;">
+      <strong style="color: #34d399;">&check; Phase 5: Mapping & Gap Assessment</strong>
+      <p style="color: var(--text-muted); margin-top: 0.25rem;">Cross-framework control mapping, review approvals, and 6-state compliance gap analysis.</p>
+    </div>
+    <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-sm); padding: 1rem;">
+      <strong style="color: #34d399;">&check; Phase 6: Risk Register & Treatment</strong>
+      <p style="color: var(--text-muted); margin-top: 0.25rem;">Risk matrix, 5x5 Likelihood/Impact calculator, inherent vs residual risk, treatment workflows.</p>
+    </div>
+    <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-sm); padding: 1rem;">
+      <strong style="color: #34d399;">&check; Phase 7: Evidence Vault & Testing</strong>
+      <p style="color: var(--text-muted); margin-top: 0.25rem;">Secure file upload, SHA-256 tamper detection, control testing procedures & pass/fail logging.</p>
+    </div>
+    <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-sm); padding: 1rem;">
+      <strong style="color: #34d399;">&check; Phase 8: Audit Findings & CAPA</strong>
+      <p style="color: var(--text-muted); margin-top: 0.25rem;">Deficiency tracking, root-cause analysis, corrective action plans, retesting & closure approval.</p>
+    </div>
+    <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-sm); padding: 1rem;">
+      <strong style="color: #34d399;">&check; Phase 9: Dashboards &amp; Reports</strong>
+      <p style="color: var(--text-muted); margin-top: 0.25rem;">Executive compliance readiness dashboards, risk heatmaps, Markdown export, and 4 automated tests.</p>
+    </div>
+    <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-sm); padding: 1rem;">
+      <strong style="color: #34d399;">&check; Phase 10: Hardening &amp; Deployment</strong>
+      <p style="color: var(--text-muted); margin-top: 0.25rem;">Docker multi-stage build, Nginx TLS proxy, SECURITY.md, 50-question interview Q&amp;A guide &amp; 12 hardening tests.</p>
+    </div>
+  </div>
+</section>
+{% endblock %}

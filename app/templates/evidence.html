@@ -1,0 +1,292 @@
+{% extends "base.html" %}
+
+{% block title %}Evidence Management Vault | CyberGRC{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2.5rem;">
+  <!-- Header Bar -->
+  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.75rem;">
+    <div>
+      <div class="hero-pill" style="margin-bottom: 0.5rem;">
+        Module F &bull; Secure Evidence Management Vault
+      </div>
+      <h1 style="font-size: 2.1rem; font-weight: 800; letter-spacing: -0.02em;">
+        Cryptographic Evidence Vault
+      </h1>
+      <p style="color: var(--text-secondary); max-width: 800px; font-size: 0.92rem; margin-top: 0.25rem;">
+        Quarantined audit artifact storage with real-time <strong>SHA-256 integrity verification</strong>. Prevents tampering, validates file types, and binds evidence to controls and audits.
+      </p>
+    </div>
+
+    <div>
+      {% if user and user.role.value in ['ORG_ADMIN', 'GRC_ANALYST', 'CONTROL_OWNER', 'PLATFORM_ADMIN'] %}
+      <button
+        onclick="openUploadModal()"
+        style="background: linear-gradient(135deg, var(--accent-cyan), var(--accent-indigo)); color: #fff; padding: 0.7rem 1.4rem; border-radius: var(--radius-sm); font-weight: 700; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3); transition: var(--transition-smooth);"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/>
+        </svg>
+        Upload Evidence File
+      </button>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Verification Alert Banner (if integrity check triggered) -->
+  {% if verification_result %}
+  {% if verification_result.is_valid %}
+  <div class="verification-banner-valid">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink: 0;">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+    </svg>
+    <div>
+      <strong>Cryptographic Integrity Verified: Intact</strong> &mdash; File <code>{{ verification_result.file_name }}</code> matches its SHA-256 database digest:
+      <div style="font-family: var(--font-mono); font-size: 0.75rem; margin-top: 0.2rem; color: #a7f3d0;">
+        {{ verification_result.calculated_hash }}
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="verification-banner-invalid">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink: 0;">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+    </svg>
+    <div>
+      <strong>SECURITY WARNING: Hash Mismatch / File Tampered!</strong> &mdash; Status: <code>{{ verification_result.status }}</code>
+      <div style="font-family: var(--font-mono); font-size: 0.75rem; margin-top: 0.2rem;">
+        Expected: {{ verification_result.database_hash }}<br>
+        Calculated on disk: {{ verification_result.calculated_hash }}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+  {% endif %}
+
+  <!-- Summary KPI Cards -->
+  <div class="metrics-row" style="margin-bottom: 2rem;">
+    <div class="metric-box">
+      <div class="metric-label">Total Artifacts</div>
+      <div class="metric-value" style="color: #fff;">{{ counts.ALL }}</div>
+      <div class="metric-sub" style="color: var(--text-muted);">Quarantined in vault</div>
+    </div>
+    <div class="metric-box">
+      <div class="metric-label">Approved by Audit</div>
+      <div class="metric-value" style="color: #34d399;">{{ counts.APPROVED }}</div>
+      <div class="metric-sub" style="color: #6ee7b7;">Ready for CPA inspection</div>
+    </div>
+    <div class="metric-box">
+      <div class="metric-label">Pending Auditor Review</div>
+      <div class="metric-value" style="color: #fbbf24;">{{ counts.PENDING_REVIEW }}</div>
+      <div class="metric-sub" style="color: #fde68a;">Requires sign-off</div>
+    </div>
+    <div class="metric-box">
+      <div class="metric-label">Vault Policy & Quotas</div>
+      <div class="metric-value" style="color: #38bdf8;">{{ settings.MAX_UPLOAD_SIZE_MB }} MB Max</div>
+      <div class="metric-sub" style="color: #7dd3fc;">SHA-256 Anti-Tamper active</div>
+    </div>
+  </div>
+
+  <!-- Filter Pills Bar -->
+  <div class="status-section" style="padding: 1.25rem; margin-bottom: 2rem;">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+      <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
+        <a href="/evidence" class="badge-tag" style="padding: 0.35rem 0.75rem; border-radius: var(--radius-full); font-size: 0.78rem; {% if active_status == 'ALL' %}background: rgba(255, 255, 255, 0.15); color: #fff; font-weight: 700;{% endif %}">
+          All Evidence ({{ counts.ALL }})
+        </a>
+        <a href="/evidence?status_filter=APPROVED" class="badge-tag" style="padding: 0.35rem 0.75rem; border-radius: var(--radius-full); font-size: 0.78rem; {% if active_status == 'APPROVED' %}background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: rgba(16, 185, 129, 0.4); font-weight: 700;{% endif %}">
+          Approved ({{ counts.APPROVED }})
+        </a>
+        <a href="/evidence?status_filter=PENDING_REVIEW" class="badge-tag" style="padding: 0.35rem 0.75rem; border-radius: var(--radius-full); font-size: 0.78rem; {% if active_status == 'PENDING_REVIEW' %}background: rgba(245, 158, 11, 0.2); color: #fbbf24; border-color: rgba(245, 158, 11, 0.4); font-weight: 700;{% endif %}">
+          Pending Review ({{ counts.PENDING_REVIEW }})
+        </a>
+        <a href="/evidence?status_filter=REJECTED" class="badge-tag" style="padding: 0.35rem 0.75rem; border-radius: var(--radius-full); font-size: 0.78rem; {% if active_status == 'REJECTED' %}background: rgba(239, 68, 68, 0.2); color: #f87171; border-color: rgba(239, 68, 68, 0.4); font-weight: 700;{% endif %}">
+          Rejected ({{ counts.REJECTED }})
+        </a>
+      </div>
+
+      <div style="font-size: 0.8rem; color: var(--text-muted);">
+        Allowed Types: <code>PDF, PNG, JPG, DOCX, XLSX, CSV, TXT</code>
+      </div>
+    </div>
+  </div>
+
+  <!-- Evidence Catalog Table -->
+  <div class="grc-table-container">
+    <table class="grc-table">
+      <thead>
+        <tr>
+          <th style="width: 22%;">Evidence Title & Filename</th>
+          <th style="width: 14%;">Linked Control</th>
+          <th style="width: 12%;">File Size & Type</th>
+          <th style="width: 18%;">SHA-256 Fingerprint</th>
+          <th style="width: 12%;">Review Status</th>
+          <th style="width: 22%;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if records | length == 0 %}
+        <tr>
+          <td colspan="6" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+            No audit evidence files match your filter criteria.
+          </td>
+        </tr>
+        {% else %}
+        {% for e in records %}
+        <tr>
+          <td>
+            <div style="font-weight: 700; color: #fff; font-size: 0.88rem;">
+              {{ e.title }}
+            </div>
+            <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-cyan); margin-top: 0.15rem;">
+              {{ e.file_name }}
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem; line-height: 1.35;">
+              {{ e.description }}
+            </div>
+          </td>
+          <td>
+            {% if e.control %}
+            <a href="/controls/{{ e.control.control_id }}" style="font-family: var(--font-mono); font-size: 0.82rem; font-weight: 700; color: #38bdf8; display: block;">
+              {{ e.control.control_id }}
+            </a>
+            <span style="font-size: 0.75rem; color: var(--text-secondary);">
+              {{ e.control.name }}
+            </span>
+            {% else %}
+            <span style="color: var(--text-muted); font-size: 0.78rem; font-style: italic;">General Vault Artifact</span>
+            {% endif %}
+          </td>
+          <td>
+            <div style="font-family: var(--font-mono); font-size: 0.82rem; color: var(--text-primary);">
+              {{ (e.file_size_bytes / 1024) | round(1) }} KB
+            </div>
+            <span class="badge-tag" style="margin: 0.2rem 0 0 0; padding: 0.15rem 0.4rem; font-size: 0.68rem;">
+              {{ e.mime_type }}
+            </span>
+          </td>
+          <td>
+            <span class="hash-pill" title="{{ e.sha256_hash }}">
+              {{ e.sha256_hash[:10] }}...{{ e.sha256_hash[-8:] }}
+            </span>
+          </td>
+          <td>
+            {% if e.review_status.value == 'APPROVED' %}
+            <span class="badge-tag status-pill-IMPLEMENTED" style="margin: 0;">Approved</span>
+            {% elif e.review_status.value == 'PENDING_REVIEW' %}
+            <span class="badge-tag status-pill-PARTIALLY_IMPLEMENTED" style="margin: 0;">Pending</span>
+            {% elif e.review_status.value == 'REJECTED' %}
+            <span class="badge-tag status-pill-NOT_IMPLEMENTED" style="margin: 0;">Rejected</span>
+            {% else %}
+            <span class="badge-tag status-pill-NOT_ASSESSED" style="margin: 0;">{{ e.review_status.value }}</span>
+            {% endif %}
+          </td>
+          <td>
+            <div style="display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap;">
+              <a
+                href="/api/v1/evidence/{{ e.id }}/download"
+                style="padding: 0.3rem 0.6rem; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.35); border-radius: var(--radius-sm); color: #38bdf8; font-size: 0.75rem; font-weight: 600; text-decoration: none;"
+              >
+                Download
+              </a>
+
+              <a
+                href="/evidence?verified_id={{ e.id }}{% if active_status != 'ALL' %}&status_filter={{ active_status }}{% endif %}"
+                style="padding: 0.3rem 0.6rem; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: var(--radius-sm); color: #34d399; font-size: 0.75rem; font-weight: 600; text-decoration: none;"
+              >
+                Verify Hash
+              </a>
+
+              {% if user and user.role.value in ['ORG_ADMIN', 'GRC_ANALYST', 'AUDITOR'] %}
+                {% if e.review_status.value != 'APPROVED' %}
+                <form method="POST" action="/evidence/{{ e.id }}/review" style="display: inline;">
+                  <input type="hidden" name="action" value="APPROVE">
+                  <button type="submit" style="padding: 0.3rem 0.55rem; background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16, 185, 129, 0.4); border-radius: var(--radius-sm); color: #34d399; font-size: 0.75rem; font-weight: 600; cursor: pointer;">
+                    Approve
+                  </button>
+                </form>
+                {% endif %}
+                {% if e.review_status.value != 'REJECTED' %}
+                <form method="POST" action="/evidence/{{ e.id }}/review" style="display: inline;">
+                  <input type="hidden" name="action" value="REJECT">
+                  <button type="submit" style="padding: 0.3rem 0.55rem; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-sm); color: #f87171; font-size: 0.75rem; font-weight: 600; cursor: pointer;">
+                    Reject
+                  </button>
+                </form>
+                {% endif %}
+              {% endif %}
+
+              {% if user and user.role.value in ['ORG_ADMIN', 'GRC_ANALYST'] %}
+              <form method="POST" action="/evidence/{{ e.id }}/delete" style="display: inline;" onsubmit="return confirm('Delete this evidence file?');">
+                <button type="submit" style="padding: 0.3rem 0.5rem; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: var(--text-muted); font-size: 0.75rem; cursor: pointer;">
+                  &times;
+                </button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- Modal: Upload Evidence File                                               -->
+<!-- ========================================================================= -->
+<div id="uploadModal" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); backdrop-filter: var(--glass-blur); z-index: 200; align-items: center; justify-content: center; padding: 1.5rem;">
+  <div class="glass-card" style="width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; padding: 2rem;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.75rem;">
+      <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff;">Upload Evidence Artifact</h3>
+      <button onclick="closeUploadModal()" style="background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
+    </div>
+
+    <form method="POST" action="/evidence/upload" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 1.15rem;">
+      <div>
+        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Artifact Title</label>
+        <input type="text" name="title" required placeholder="Q1 AWS Production IAM Credential Report" style="width: 100%; padding: 0.65rem; background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; font-size: 0.88rem;">
+      </div>
+
+      <div>
+        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Evidence Description & Audit Purpose</label>
+        <textarea name="description" required rows="2" placeholder="Export showing enforcement of multi-factor authentication across all privileged identities..." style="width: 100%; padding: 0.65rem; background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; font-size: 0.88rem;"></textarea>
+      </div>
+
+      <div>
+        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Link to Security Control (Optional)</label>
+        <select name="control_id" style="width: 100%; padding: 0.65rem; background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; font-size: 0.88rem;">
+          <option value="">-- No specific control link (General Repository) --</option>
+          {% for c in controls %}
+          <option value="{{ c.id }}">{{ c.control_id }} &bull; {{ c.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Select File (*.pdf, *.png, *.jpg, *.docx, *.xlsx, *.csv, *.txt)</label>
+        <input type="file" name="file" required style="width: 100%; padding: 0.65rem; background: rgba(10, 14, 23, 0.8); border: 1px dashed var(--border-accent); border-radius: var(--radius-sm); color: #fff; font-size: 0.85rem;">
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1rem;">
+        <button type="button" onclick="closeUploadModal()" style="padding: 0.65rem 1.25rem; background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; cursor: pointer;">
+          Cancel
+        </button>
+        <button type="submit" style="padding: 0.65rem 1.25rem; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-indigo)); border: none; border-radius: var(--radius-sm); color: #fff; font-weight: 700; cursor: pointer;">
+          Upload & Compute SHA-256
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openUploadModal() {
+  document.getElementById('uploadModal').style.display = 'flex';
+}
+function closeUploadModal() {
+  document.getElementById('uploadModal').style.display = 'none';
+}
+</script>
+{% endblock %}

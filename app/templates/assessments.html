@@ -1,0 +1,410 @@
+{% extends "base.html" %}
+
+{% block title %}{{ selected_framework }} Compliance Gap Assessment | CyberGRC{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2.5rem;">
+  <!-- Header Bar -->
+  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.75rem;">
+    <div>
+      <div class="hero-pill" style="margin-bottom: 0.5rem;">
+        Module E &bull; Compliance Gap Assessment Engine
+      </div>
+      <h1 style="font-size: 2.1rem; font-weight: 800; letter-spacing: -0.02em;">
+        Framework Compliance Readiness & Gap Assessment
+      </h1>
+      <p style="color: var(--text-secondary); max-width: 800px; font-size: 0.92rem; margin-top: 0.25rem;">
+        Evaluates organizational posture against <strong>SOC 2</strong>, <strong>ISO/IEC 27001</strong>, and <strong>NIST CSF 2.0</strong>. Every metric defines clear scope, applicable denominators, and remediation actions.
+      </p>
+    </div>
+  </div>
+
+  <!-- Framework Switcher Tabs -->
+  <div style="display: flex; gap: 0.75rem; margin-bottom: 2rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 1rem; overflow-x: auto;">
+    {% for s in summaries %}
+    <a
+      href="/assessments?framework={{ s.framework_code }}"
+      style="display: flex; align-items: center; gap: 0.85rem; padding: 0.85rem 1.4rem; border-radius: var(--radius-md); text-decoration: none; border: 1px solid {% if s.framework_code == selected_framework %}var(--border-accent){% else %}var(--border-subtle){% endif %}; background: {% if s.framework_code == selected_framework %}rgba(56, 189, 248, 0.12){% else %}var(--bg-surface){% endif %}; transition: var(--transition-smooth);"
+    >
+      <div>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <span style="font-weight: 800; font-size: 1.05rem; color: {% if s.framework_code == selected_framework %}#fff{% else %}var(--text-secondary){% endif %};">
+            {{ s.framework_code }}
+          </span>
+          <span style="font-size: 0.72rem; padding: 0.15rem 0.45rem; border-radius: var(--radius-sm); background: rgba(255, 255, 255, 0.08); color: var(--text-muted);">
+            {{ s.framework_version }}
+          </span>
+        </div>
+        <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.2rem;">
+          {{ s.implemented_count }}/{{ s.applicable_requirements }} Implemented ({{ s.strict_readiness_pct }}%)
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+
+  <!-- Framework Readiness Scorecard -->
+  {% if active_summary %}
+  <div class="status-section" style="padding: 2rem; margin-bottom: 2rem; border-color: rgba(56, 189, 248, 0.25);">
+    <div style="display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 1.5rem; margin-bottom: 1.5rem;">
+      <div>
+        <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.35rem;">
+          <h2 style="font-size: 1.5rem; font-weight: 800; color: #fff;">
+            {{ active_summary.framework_name }}
+          </h2>
+          <span class="badge-tag {% if active_summary.framework_code == 'SOC2' %}matrix-chip-soc2{% elif active_summary.framework_code == 'ISO27001' %}matrix-chip-iso{% else %}matrix-chip-nist{% endif %}" style="margin: 0;">
+            {{ active_summary.assurance_type }}
+          </span>
+        </div>
+        <p style="color: var(--text-secondary); font-size: 0.88rem; max-width: 720px; line-height: 1.5;">
+          {{ active_summary.scope_definition }}
+        </p>
+      </div>
+
+      <!-- Readiness Gauges -->
+      <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
+        <!-- Strict Readiness -->
+        <div style="background: rgba(10, 14, 23, 0.75); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1.25rem 1.5rem; text-align: center; min-width: 170px;">
+          <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600;">
+            Strict Readiness
+          </div>
+          <div style="font-size: 2.2rem; font-weight: 800; color: #38bdf8; font-family: var(--font-mono); margin: 0.2rem 0;">
+            {{ active_summary.strict_readiness_pct }}%
+          </div>
+          <div style="font-size: 0.75rem; color: var(--text-secondary);">
+            {{ active_summary.implemented_count }} of {{ active_summary.applicable_requirements }} applicable
+          </div>
+        </div>
+
+        <!-- Weighted Readiness -->
+        <div style="background: rgba(10, 14, 23, 0.75); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1.25rem 1.5rem; text-align: center; min-width: 170px;">
+          <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600;">
+            Weighted Readiness
+          </div>
+          <div style="font-size: 2.2rem; font-weight: 800; color: #34d399; font-family: var(--font-mono); margin: 0.2rem 0;">
+            {{ active_summary.weighted_readiness_pct }}%
+          </div>
+          <div style="font-size: 0.75rem; color: var(--text-secondary);">
+            Includes partial credits
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dual Progress Bars -->
+    <div style="margin-bottom: 1.5rem;">
+      <div style="display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.25rem;">
+        <span>Progress: Strict [{{ active_summary.implemented_count }} Fully Implemented]</span>
+        <span>{{ active_summary.strict_readiness_pct }}%</span>
+      </div>
+      <div class="readiness-bar-bg">
+        <div class="readiness-bar-fill" style="width: {{ active_summary.strict_readiness_pct }}%; background: linear-gradient(90deg, #06b6d4, #38bdf8);"></div>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--text-muted); margin-top: 0.6rem; margin-bottom: 0.25rem;">
+        <span>Progress: Weighted [{{ active_summary.implemented_count }} Fully Implemented + {{ active_summary.partially_implemented_count }} Partial]</span>
+        <span>{{ active_summary.weighted_readiness_pct }}%</span>
+      </div>
+      <div class="readiness-bar-bg">
+        <div class="readiness-bar-fill" style="width: {{ active_summary.weighted_readiness_pct }}%; background: linear-gradient(90deg, #10b981, #34d399);"></div>
+      </div>
+    </div>
+
+    <!-- Granular Metrics Breakdown Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.75rem; font-family: var(--font-mono); text-align: center;">
+      <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 0.75rem;">
+        <div style="font-size: 0.72rem; color: var(--text-muted); font-family: var(--font-sans);">TOTAL REQS</div>
+        <div style="font-size: 1.25rem; font-weight: 700; color: #fff;">{{ active_summary.total_requirements }}</div>
+      </div>
+      <div style="background: rgba(16, 185, 129, 0.06); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: var(--radius-sm); padding: 0.75rem;">
+        <div style="font-size: 0.72rem; color: #34d399; font-family: var(--font-sans);">IMPLEMENTED</div>
+        <div style="font-size: 1.25rem; font-weight: 700; color: #34d399;">{{ active_summary.implemented_count }}</div>
+      </div>
+      <div style="background: rgba(245, 158, 11, 0.06); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: var(--radius-sm); padding: 0.75rem;">
+        <div style="font-size: 0.72rem; color: #fbbf24; font-family: var(--font-sans);">PARTIALLY IMPL</div>
+        <div style="font-size: 1.25rem; font-weight: 700; color: #fbbf24;">{{ active_summary.partially_implemented_count }}</div>
+      </div>
+      <div style="background: rgba(244, 63, 94, 0.06); border: 1px solid rgba(244, 63, 94, 0.2); border-radius: var(--radius-sm); padding: 0.75rem;">
+        <div style="font-size: 0.72rem; color: #fda4af; font-family: var(--font-sans);">NEEDS IMPR</div>
+        <div style="font-size: 1.25rem; font-weight: 700; color: #fda4af;">{{ active_summary.needs_improvement_count }}</div>
+      </div>
+      <div style="background: rgba(239, 68, 68, 0.06); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: var(--radius-sm); padding: 0.75rem;">
+        <div style="font-size: 0.72rem; color: #f87171; font-family: var(--font-sans);">NOT IMPL</div>
+        <div style="font-size: 1.25rem; font-weight: 700; color: #f87171;">{{ active_summary.not_implemented_count }}</div>
+      </div>
+      <div style="background: rgba(148, 163, 184, 0.06); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: var(--radius-sm); padding: 0.75rem;">
+        <div style="font-size: 0.72rem; color: #94a3b8; font-family: var(--font-sans);">NOT APPLICABLE</div>
+        <div style="font-size: 1.25rem; font-weight: 700; color: #94a3b8;">{{ active_summary.not_applicable_count }}</div>
+      </div>
+      <div style="background: rgba(100, 116, 139, 0.06); border: 1px solid rgba(100, 116, 139, 0.2); border-radius: var(--radius-sm); padding: 0.75rem;">
+        <div style="font-size: 0.72rem; color: #64748b; font-family: var(--font-sans);">NOT ASSESSED</div>
+        <div style="font-size: 1.25rem; font-weight: 700; color: #64748b;">{{ active_summary.not_assessed_count }}</div>
+      </div>
+    </div>
+
+    <!-- Formula Disclaimer -->
+    <div style="margin-top: 1.25rem; font-size: 0.78rem; color: var(--text-muted); background: rgba(0, 0, 0, 0.2); padding: 0.6rem 1rem; border-radius: var(--radius-sm);">
+      <strong>Formula Calculation:</strong> {{ active_summary.formula_explanation }}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Filter Pills Bar -->
+  <div class="status-section" style="padding: 1rem 1.25rem; margin-bottom: 1.5rem;">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
+      <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
+        <a href="/assessments?framework={{ selected_framework }}" class="badge-tag" style="padding: 0.35rem 0.75rem; border-radius: var(--radius-full); font-size: 0.78rem; {% if status_filter == 'ALL' %}background: rgba(56, 189, 248, 0.2); color: #38bdf8; border-color: rgba(56, 189, 248, 0.4); font-weight: 700;{% endif %}">
+          All Requirements ({{ status_counts.ALL }})
+        </a>
+        <a href="/assessments?framework={{ selected_framework }}&status_filter=GAPS_ONLY" class="badge-tag" style="padding: 0.35rem 0.75rem; border-radius: var(--radius-full); font-size: 0.78rem; {% if status_filter == 'GAPS_ONLY' %}background: rgba(239, 68, 68, 0.25); color: #fca5a5; border-color: rgba(239, 68, 68, 0.5); font-weight: 700;{% endif %}">
+          Active Gaps Only ({{ status_counts.GAPS_ONLY }})
+        </a>
+        <a href="/assessments?framework={{ selected_framework }}&status_filter=IMPLEMENTED" class="badge-tag" style="padding: 0.35rem 0.75rem; border-radius: var(--radius-full); font-size: 0.78rem; {% if status_filter == 'IMPLEMENTED' %}background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: rgba(16, 185, 129, 0.4); font-weight: 700;{% endif %}">
+          Implemented ({{ status_counts.IMPLEMENTED }})
+        </a>
+        <a href="/assessments?framework={{ selected_framework }}&status_filter=PARTIALLY_IMPLEMENTED" class="badge-tag" style="padding: 0.35rem 0.75rem; border-radius: var(--radius-full); font-size: 0.78rem; {% if status_filter == 'PARTIALLY_IMPLEMENTED' %}background: rgba(245, 158, 11, 0.2); color: #fbbf24; border-color: rgba(245, 158, 11, 0.4); font-weight: 700;{% endif %}">
+          Partial ({{ status_counts.PARTIALLY_IMPLEMENTED }})
+        </a>
+        <a href="/assessments?framework={{ selected_framework }}&status_filter=NEEDS_IMPROVEMENT" class="badge-tag" style="padding: 0.35rem 0.75rem; border-radius: var(--radius-full); font-size: 0.78rem; {% if status_filter == 'NEEDS_IMPROVEMENT' %}background: rgba(244, 63, 94, 0.2); color: #fda4af; border-color: rgba(244, 63, 94, 0.4); font-weight: 700;{% endif %}">
+          Needs Improvement ({{ status_counts.NEEDS_IMPROVEMENT }})
+        </a>
+        <a href="/assessments?framework={{ selected_framework }}&status_filter=NOT_APPLICABLE" class="badge-tag" style="padding: 0.35rem 0.75rem; border-radius: var(--radius-full); font-size: 0.78rem; {% if status_filter == 'NOT_APPLICABLE' %}background: rgba(148, 163, 184, 0.2); color: #94a3b8; border-color: rgba(148, 163, 184, 0.4); font-weight: 700;{% endif %}">
+          Not Applicable ({{ status_counts.NOT_APPLICABLE }})
+        </a>
+      </div>
+
+      <div style="font-size: 0.8rem; color: var(--text-muted);">
+        Showing <strong>{{ items | length }}</strong> requirements
+      </div>
+    </div>
+  </div>
+
+  <!-- Requirements Assessment Table -->
+  <div class="grc-table-container">
+    <table class="grc-table">
+      <thead>
+        <tr>
+          <th style="width: 14%;">Requirement</th>
+          <th style="width: 18%;">Title & Category</th>
+          <th style="width: 12%;">Readiness Status</th>
+          <th style="width: 24%;">Identified Gaps & Justifications</th>
+          <th style="width: 20%;">Recommended Next Steps</th>
+          <th style="width: 12%;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if items | length == 0 %}
+        <tr>
+          <td colspan="6" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+            No requirements match the selected gap filter.
+          </td>
+        </tr>
+        {% else %}
+        {% for item in items %}
+        <tr>
+          <td>
+            <div style="font-family: var(--font-mono); font-weight: 700; font-size: 0.95rem; color: var(--accent-cyan);">
+              {{ item.requirement.identifier }}
+            </div>
+            <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.2rem;">
+              {{ item.mapped_controls | length }} Mapped Control(s)
+            </div>
+          </td>
+          <td>
+            <div style="font-weight: 600; color: #fff; font-size: 0.88rem; margin-bottom: 0.2rem;">
+              {{ item.requirement.title }}
+            </div>
+            <span class="badge-tag" style="margin: 0; padding: 0.15rem 0.45rem; font-size: 0.72rem;">
+              {{ item.requirement.category }}
+            </span>
+          </td>
+          <td>
+            {% if item.status.value == 'IMPLEMENTED' %}
+            <span class="badge-tag status-pill-IMPLEMENTED" style="margin: 0;">Implemented</span>
+            {% elif item.status.value == 'PARTIALLY_IMPLEMENTED' %}
+            <span class="badge-tag status-pill-PARTIALLY_IMPLEMENTED" style="margin: 0;">Partial</span>
+            {% elif item.status.value == 'NEEDS_IMPROVEMENT' %}
+            <span class="badge-tag status-pill-NEEDS_IMPROVEMENT" style="margin: 0;">Needs Impr.</span>
+            {% elif item.status.value == 'NOT_IMPLEMENTED' %}
+            <span class="badge-tag status-pill-NOT_IMPLEMENTED" style="margin: 0;">Not Impl.</span>
+            {% elif item.status.value == 'NOT_APPLICABLE' %}
+            <span class="badge-tag status-pill-NOT_APPLICABLE" style="margin: 0;">N/A</span>
+            {% else %}
+            <span class="badge-tag status-pill-NOT_ASSESSED" style="margin: 0;">Not Assessed</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if item.status.value == 'NOT_APPLICABLE' %}
+              <div style="font-size: 0.8rem; color: var(--text-muted); font-style: italic;">
+                <strong>Justification:</strong> {{ item.assessment.justification if item.assessment else "No justification recorded." }}
+              </div>
+            {% elif item.assessment and item.assessment.identified_gaps %}
+              <div style="font-size: 0.82rem; color: #fca5a5; line-height: 1.4;">
+                {{ item.assessment.identified_gaps }}
+              </div>
+            {% elif item.status.value == 'IMPLEMENTED' %}
+              <div style="font-size: 0.8rem; color: #34d399;">
+                &check; No operational gaps identified. Satisfied by controls:
+                {% for c in item.mapped_controls %}
+                <a href="/controls/{{ c.control_id }}" style="font-family: var(--font-mono); font-size: 0.75rem; margin-left: 0.2rem;">{{ c.control_id }}</a>
+                {% endfor %}
+              </div>
+            {% else %}
+              <span style="color: var(--text-muted); font-size: 0.78rem; font-style: italic;">No gap evaluation documented.</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if item.assessment and item.assessment.recommended_actions %}
+              <div style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.4;">
+                {{ item.assessment.recommended_actions }}
+              </div>
+            {% else %}
+              <span style="color: var(--text-muted); font-size: 0.78rem; font-style: italic;">Pending remediation plan</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if user and user.role.value in ['ORG_ADMIN', 'GRC_ANALYST', 'PLATFORM_ADMIN'] %}
+            <button
+              onclick="openAssessModal({{ item.requirement.id }}, '{{ item.requirement.identifier }}', '{{ item.requirement.title | escape }}', '{{ item.status.value }}', '{{ (item.assessment.justification if item.assessment and item.assessment.justification else '') | escape }}', '{{ (item.assessment.identified_gaps if item.assessment and item.assessment.identified_gaps else '') | escape }}', '{{ (item.assessment.recommended_actions if item.assessment and item.assessment.recommended_actions else '') | escape }}')"
+              style="padding: 0.35rem 0.75rem; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.35); border-radius: var(--radius-sm); color: #38bdf8; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: var(--transition-smooth);"
+            >
+              Assess / Edit
+            </button>
+            {% else %}
+            <span style="font-size: 0.75rem; color: var(--text-muted);">View only</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- Modal: Assess / Record Compliance Gap                                      -->
+<!-- ========================================================================= -->
+<div id="assessModal" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); backdrop-filter: var(--glass-blur); z-index: 200; align-items: center; justify-content: center; padding: 1.5rem;">
+  <div class="glass-card" style="width: 100%; max-width: 650px; max-height: 90vh; overflow-y: auto; padding: 2rem;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.75rem;">
+      <div>
+        <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff;">Record Gap Assessment</h3>
+        <div id="modalReqTitle" style="font-size: 0.82rem; color: var(--accent-cyan); font-family: var(--font-mono); margin-top: 0.2rem;"></div>
+      </div>
+      <button onclick="closeAssessModal()" style="background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
+    </div>
+
+    <form method="POST" action="/assessments" onsubmit="return validateAssessmentForm()" style="display: flex; flex-direction: column; gap: 1.15rem;">
+      <input type="hidden" id="modalReqId" name="requirement_id">
+      <input type="hidden" name="framework_code" value="{{ selected_framework }}">
+
+      <div>
+        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">
+          6-State Compliance Readiness Status
+        </label>
+        <select id="modalStatusSelect" name="assessment_status" onchange="toggleJustificationField()" style="width: 100%; padding: 0.65rem; background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; font-size: 0.88rem;">
+          <option value="IMPLEMENTED">Implemented (Fully operational & verified)</option>
+          <option value="PARTIALLY_IMPLEMENTED">Partially Implemented (Control exists but incomplete scope)</option>
+          <option value="NEEDS_IMPROVEMENT">Needs Improvement (Implemented with audit findings/deficiencies)</option>
+          <option value="NOT_IMPLEMENTED">Not Implemented (Definite compliance gap)</option>
+          <option value="NOT_APPLICABLE">Not Applicable (Requires mandatory written justification)</option>
+          <option value="NOT_ASSESSED">Not Assessed (Initial discovery state)</option>
+        </select>
+      </div>
+
+      <!-- Mandatory Justification (highlighted when Not Applicable) -->
+      <div id="justificationGroup">
+        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">
+          Scope Justification <span id="justReqLabel" style="color: #f87171; display: none;">*(Mandatory for Not Applicable)</span>
+        </label>
+        <textarea
+          id="modalJustification"
+          name="justification"
+          rows="2"
+          placeholder="Document the technical rationale for out-of-scope determination or general governance notes..."
+          style="width: 100%; padding: 0.65rem; background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; font-size: 0.88rem; line-height: 1.4;"
+        ></textarea>
+      </div>
+
+      <div>
+        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">
+          Identified Gaps & Control Deficiencies
+        </label>
+        <textarea
+          id="modalGaps"
+          name="identified_gaps"
+          rows="3"
+          placeholder="Detail specific technical gaps, unencrypted assets, legacy accounts, or missing configurations..."
+          style="width: 100%; padding: 0.65rem; background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; font-size: 0.88rem; line-height: 1.4;"
+        ></textarea>
+      </div>
+
+      <div>
+        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">
+          Recommended Remediation Actions & Next Steps
+        </label>
+        <textarea
+          id="modalActions"
+          name="recommended_actions"
+          rows="2"
+          placeholder="Define actionable remediation tasks, compensating controls, or configuration changes..."
+          style="width: 100%; padding: 0.65rem; background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; font-size: 0.88rem; line-height: 1.4;"
+        ></textarea>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1rem;">
+        <button type="button" onclick="closeAssessModal()" style="padding: 0.65rem 1.25rem; background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; cursor: pointer;">
+          Cancel
+        </button>
+        <button type="submit" style="padding: 0.65rem 1.25rem; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-indigo)); border: none; border-radius: var(--radius-sm); color: #fff; font-weight: 700; cursor: pointer;">
+          Save Assessment
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openAssessModal(reqId, identifier, title, status, justification, gaps, actions) {
+  document.getElementById('modalReqId').value = reqId;
+  document.getElementById('modalReqTitle').textContent = identifier + ' - ' + title;
+  document.getElementById('modalStatusSelect').value = status || 'NOT_ASSESSED';
+  document.getElementById('modalJustification').value = justification || '';
+  document.getElementById('modalGaps').value = gaps || '';
+  document.getElementById('modalActions').value = actions || '';
+  toggleJustificationField();
+  document.getElementById('assessModal').style.display = 'flex';
+}
+
+function closeAssessModal() {
+  document.getElementById('assessModal').style.display = 'none';
+}
+
+function toggleJustificationField() {
+  const status = document.getElementById('modalStatusSelect').value;
+  const label = document.getElementById('justReqLabel');
+  const textarea = document.getElementById('modalJustification');
+  if (status === 'NOT_APPLICABLE') {
+    label.style.display = 'inline';
+    textarea.style.borderColor = 'rgba(239, 68, 68, 0.6)';
+    textarea.placeholder = 'MANDATORY: Provide formal justification for why this requirement is out-of-scope...';
+  } else {
+    label.style.display = 'none';
+    textarea.style.borderColor = 'var(--border-subtle)';
+    textarea.placeholder = 'Document technical rationale for out-of-scope determination or general governance notes...';
+  }
+}
+
+function validateAssessmentForm() {
+  const status = document.getElementById('modalStatusSelect').value;
+  const just = document.getElementById('modalJustification').value.trim();
+  if (status === 'NOT_APPLICABLE' && just.length === 0) {
+    alert('A documented justification is mandatory when marking a requirement as Not Applicable.');
+    document.getElementById('modalJustification').focus();
+    return false;
+  }
+  return true;
+}
+</script>
+{% endblock %}

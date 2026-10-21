@@ -1,0 +1,333 @@
+{% extends "base.html" %}
+
+{% block title %}Executive Compliance Dashboard | CyberGRC{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2.5rem;">
+  <!-- Header Bar -->
+  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+    <div>
+      <div class="hero-pill" style="margin-bottom: 0.5rem;">
+        Module H &bull; Executive Dashboards &amp; Audit Readiness
+      </div>
+      <h1 style="font-size: 2.1rem; font-weight: 800; letter-spacing: -0.02em;">
+        Executive Compliance &amp; Readiness Dashboard
+      </h1>
+      <p style="color: var(--text-secondary); max-width: 800px; font-size: 0.92rem; margin-top: 0.25rem;">
+        Consolidated compliance posture for <strong>{{ metrics.organization_name }}</strong> across SOC 2, ISO/IEC 27001:2022, and NIST CSF 2.0 with real-time risk reduction and evidence coverage tracking.
+      </p>
+    </div>
+
+    <!-- Actions: Download Markdown & Printable Report -->
+    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+      <a
+        href="/api/v1/reports/export"
+        style="background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border-accent); color: #fff; padding: 0.65rem 1.25rem; border-radius: var(--radius-sm); font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 0.45rem; transition: var(--transition-smooth);"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+        </svg>
+        Download Audit Report (.md)
+      </a>
+
+      <a
+        href="/reports/executive"
+        target="_blank"
+        style="background: linear-gradient(135deg, var(--accent-cyan), var(--accent-indigo)); color: #fff; padding: 0.65rem 1.35rem; border-radius: var(--radius-sm); font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 0.45rem; box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3); transition: var(--transition-smooth);"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/>
+        </svg>
+        Printable Executive Report
+      </a>
+    </div>
+  </div>
+
+  <!-- Regulatory Assurance Notice -->
+  <div class="regulatory-disclaimer" style="margin-bottom: 2rem;">
+    <div style="display: flex; align-items: flex-start; gap: 0.85rem;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="color: var(--accent-amber); flex-shrink: 0; margin-top: 0.15rem;">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+      </svg>
+      <div>
+        <strong style="color: #fff; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;">
+          Independent Assurance &amp; Certification Boundaries
+        </strong>
+        <p style="margin: 0.25rem 0 0 0; font-size: 0.8rem; line-height: 1.45; color: var(--text-secondary);">
+          This dashboard displays internal self-assessment scores and control readiness. <strong>Software cannot issue official SOC 2 Type I/II examination reports</strong> (AICPA SSAE 18 licensed CPA examination required) or <strong>ISO/IEC 27001 certificates</strong> (accredited third-party certification body registrar required). <strong>NIST CSF 2.0 is voluntary risk management guidance (non-certifiable).</strong>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Primary Executive Gauge / KPI Row -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; margin-bottom: 2rem;">
+    <!-- SOC 2 Readiness -->
+    <div class="glass-card" style="padding: 1.5rem; text-align: center; border-top: 3px solid #38bdf8;">
+      <div style="font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.5rem;">
+        SOC 2 Type II Readiness
+      </div>
+      <div style="font-size: 2.5rem; font-weight: 800; color: #38bdf8; font-family: var(--font-mono); line-height: 1;">
+        {{ metrics.soc2_readiness }}%
+      </div>
+      <div class="readiness-bar-track" style="margin: 0.85rem auto; max-width: 160px; height: 6px;">
+        <div class="readiness-bar-fill" style="width: {{ metrics.soc2_readiness }}%; background: #38bdf8;"></div>
+      </div>
+      <div style="font-size: 0.75rem; color: var(--text-secondary);">
+        AICPA Trust Services Criteria
+      </div>
+    </div>
+
+    <!-- ISO 27001 Readiness -->
+    <div class="glass-card" style="padding: 1.5rem; text-align: center; border-top: 3px solid #a855f7;">
+      <div style="font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.5rem;">
+        ISO 27001:2022 ISMS
+      </div>
+      <div style="font-size: 2.5rem; font-weight: 800; color: #c084fc; font-family: var(--font-mono); line-height: 1;">
+        {{ metrics.iso27001_readiness }}%
+      </div>
+      <div class="readiness-bar-track" style="margin: 0.85rem auto; max-width: 160px; height: 6px;">
+        <div class="readiness-bar-fill" style="width: {{ metrics.iso27001_readiness }}%; background: #a855f7;"></div>
+      </div>
+      <div style="font-size: 0.75rem; color: var(--text-secondary);">
+        Clauses 4-10 &bull; 93 Annex A Controls
+      </div>
+    </div>
+
+    <!-- NIST CSF 2.0 Maturity -->
+    <div class="glass-card" style="padding: 1.5rem; text-align: center; border-top: 3px solid #10b981;">
+      <div style="font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.5rem;">
+        NIST CSF 2.0 Profile
+      </div>
+      <div style="font-size: 2.5rem; font-weight: 800; color: #34d399; font-family: var(--font-mono); line-height: 1;">
+        {{ metrics.nist_csf_readiness }}%
+      </div>
+      <div class="readiness-bar-track" style="margin: 0.85rem auto; max-width: 160px; height: 6px;">
+        <div class="readiness-bar-fill" style="width: {{ metrics.nist_csf_readiness }}%; background: #10b981;"></div>
+      </div>
+      <div style="font-size: 0.75rem; color: var(--text-secondary);">
+        Voluntary &bull; GV, ID, PR, DE, RS, RC
+      </div>
+    </div>
+
+    <!-- Enterprise Risk Reduction % -->
+    <div class="glass-card" style="padding: 1.5rem; text-align: center; border-top: 3px solid #f59e0b;">
+      <div style="font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.5rem;">
+        Enterprise Risk Reduction
+      </div>
+      <div style="font-size: 2.5rem; font-weight: 800; color: #fbbf24; font-family: var(--font-mono); line-height: 1;">
+        -{{ metrics.risk_reduction_pct }}%
+      </div>
+      <div class="readiness-bar-track" style="margin: 0.85rem auto; max-width: 160px; height: 6px;">
+        <div class="readiness-bar-fill" style="width: {{ metrics.risk_reduction_pct }}%; background: #f59e0b;"></div>
+      </div>
+      <div style="font-size: 0.75rem; color: var(--text-secondary);">
+        {{ metrics.risk_summary.total_inherent_exposure }} &rarr; {{ metrics.risk_summary.total_residual_exposure }} Exposure Pts
+      </div>
+    </div>
+
+    <!-- Evidence Vault Coverage -->
+    <div class="glass-card" style="padding: 1.5rem; text-align: center; border-top: 3px solid #06b6d4;">
+      <div style="font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.5rem;">
+        Evidence Vault Coverage
+      </div>
+      <div style="font-size: 2.5rem; font-weight: 800; color: #22d3ee; font-family: var(--font-mono); line-height: 1;">
+        {{ metrics.controls.evidence_coverage_pct }}%
+      </div>
+      <div class="readiness-bar-track" style="margin: 0.85rem auto; max-width: 160px; height: 6px;">
+        <div class="readiness-bar-fill" style="width: {{ metrics.controls.evidence_coverage_pct }}%; background: #06b6d4;"></div>
+      </div>
+      <div style="font-size: 0.75rem; color: var(--text-secondary);">
+        {{ metrics.controls.with_evidence }} of {{ metrics.controls.total }} Controls Verified
+      </div>
+    </div>
+  </div>
+
+  <!-- Multi-Framework Crosswalk Breakdown Table -->
+  <div style="margin-bottom: 2.5rem;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+      <h2 style="font-size: 1.35rem; font-weight: 700; color: #fff;">
+        Framework-by-Framework Readiness Comparison
+      </h2>
+      <a href="/assessments" style="font-size: 0.82rem; color: var(--accent-cyan); text-decoration: none;">
+        View Detailed Gap Assessments &rarr;
+      </a>
+    </div>
+
+    <div class="grc-table-container">
+      <table class="grc-table">
+        <thead>
+          <tr>
+            <th style="width: 18%;">Framework</th>
+            <th style="width: 22%;">Assurance &amp; Governance Model</th>
+            <th style="width: 12%;">Applicable / Total</th>
+            <th style="width: 12%;">Implemented</th>
+            <th style="width: 12%;">Open Gaps</th>
+            <th style="width: 12%;">Strict Score</th>
+            <th style="width: 12%;">Weighted Score</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for fw in metrics.frameworks %}
+          <tr>
+            <td>
+              <div style="font-weight: 700; color: #fff; font-size: 0.95rem;">
+                {{ fw.framework_code }}
+              </div>
+              <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.15rem;">
+                {{ fw.framework_name }}
+              </div>
+            </td>
+            <td>
+              <div style="font-size: 0.8rem; color: #fff;">
+                {{ fw.assurance_type }}
+              </div>
+              <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.15rem;">
+                {{ fw.issuing_body }}
+              </div>
+            </td>
+            <td>
+              <span style="font-family: var(--font-mono); font-size: 0.85rem; font-weight: 700; color: #fff;">
+                {{ fw.applicable_requirements }}
+              </span>
+              <span style="font-size: 0.75rem; color: var(--text-muted);">/ {{ fw.total_requirements }}</span>
+              {% if fw.not_applicable_count > 0 %}
+              <div style="font-size: 0.68rem; color: var(--text-muted);">({{ fw.not_applicable_count }} N/A)</div>
+              {% endif %}
+            </td>
+            <td>
+              <span style="font-family: var(--font-mono); font-size: 0.88rem; font-weight: 700; color: #34d399;">
+                {{ fw.implemented_count }}
+              </span>
+            </td>
+            <td>
+              {% if fw.gap_count > 0 %}
+              <span style="font-family: var(--font-mono); font-size: 0.88rem; font-weight: 700; color: #f87171;">
+                {{ fw.gap_count }}
+              </span>
+              {% else %}
+              <span style="color: #34d399; font-size: 0.82rem;">0 Gaps</span>
+              {% endif %}
+            </td>
+            <td>
+              <span style="font-family: var(--font-mono); font-size: 0.88rem; font-weight: 600; color: var(--text-primary);">
+                {{ fw.strict_readiness_pct }}%
+              </span>
+            </td>
+            <td>
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span style="font-family: var(--font-mono); font-size: 0.95rem; font-weight: 800; color: #38bdf8;">
+                  {{ fw.weighted_readiness_pct }}%
+                </span>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 3-Column Operational Health Breakdown -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem;">
+    <!-- Column 1: Risk Reduction & Heatmap Summary -->
+    <div class="glass-card" style="padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between;">
+      <div>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.85rem;">
+          <h3 style="font-size: 1.1rem; font-weight: 700; color: #fff;">
+            Risk Management Posture
+          </h3>
+          <a href="/risks" style="font-size: 0.78rem; color: var(--accent-cyan); text-decoration: none;">Risk Register &rarr;</a>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.85rem;">
+          <div style="display: flex; justify-content: space-between; padding: 0.5rem; background: rgba(10, 14, 23, 0.4); border-radius: var(--radius-sm);">
+            <span style="color: var(--text-secondary);">Total Identified Risks:</span>
+            <strong style="color: #fff;">{{ metrics.risk_summary.total_risks }} Scenarios</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding: 0.5rem; background: rgba(10, 14, 23, 0.4); border-radius: var(--radius-sm);">
+            <span style="color: var(--text-secondary);">Inherent Score Exposure:</span>
+            <strong style="color: #f87171;">{{ metrics.risk_summary.total_inherent_exposure }} Pts</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding: 0.5rem; background: rgba(10, 14, 23, 0.4); border-radius: var(--radius-sm);">
+            <span style="color: var(--text-secondary);">Residual Score Exposure:</span>
+            <strong style="color: #34d399;">{{ metrics.risk_summary.total_residual_exposure }} Pts</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding: 0.5rem; background: rgba(16, 185, 129, 0.1); border-radius: var(--radius-sm); border: 1px solid rgba(16, 185, 129, 0.3);">
+            <span style="color: #6ee7b7; font-weight: 600;">Net Risk Reduction:</span>
+            <strong style="color: #34d399;">{{ metrics.risk_reduction_pct }}% Lower</strong>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top: 1rem; font-size: 0.75rem; color: var(--text-muted);">
+        Strategies: {{ metrics.risk_summary.mitigate_count }} Mitigate &bull; {{ metrics.risk_summary.accept_count }} Accept &bull; {{ metrics.risk_summary.transfer_count }} Transfer &bull; {{ metrics.risk_summary.avoid_count }} Avoid
+      </div>
+    </div>
+
+    <!-- Column 2: Audit Testing & Verification Stats -->
+    <div class="glass-card" style="padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between;">
+      <div>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.85rem;">
+          <h3 style="font-size: 1.1rem; font-weight: 700; color: #fff;">
+            Control Testing &amp; Verification
+          </h3>
+          <a href="/audits" style="font-size: 0.78rem; color: var(--accent-cyan); text-decoration: none;">Audit Tests &rarr;</a>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.85rem;">
+          <div style="display: flex; justify-content: space-between; padding: 0.5rem; background: rgba(10, 14, 23, 0.4); border-radius: var(--radius-sm);">
+            <span style="color: var(--text-secondary);">Total Procedures Executed:</span>
+            <strong style="color: #fff;">{{ metrics.tests.total }} Tests</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding: 0.5rem; background: rgba(10, 14, 23, 0.4); border-radius: var(--radius-sm);">
+            <span style="color: var(--text-secondary);">Passed (Operating Effectively):</span>
+            <strong style="color: #34d399;">{{ metrics.tests.pass }} ({{ metrics.tests.pass_rate_pct }}%)</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding: 0.5rem; background: rgba(10, 14, 23, 0.4); border-radius: var(--radius-sm);">
+            <span style="color: var(--text-secondary);">Failed Procedures (Exceptions):</span>
+            <strong style="color: #f87171;">{{ metrics.tests.fail }} Exceptions</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding: 0.5rem; background: rgba(10, 14, 23, 0.4); border-radius: var(--radius-sm);">
+            <span style="color: var(--text-secondary);">Pending / Inconclusive:</span>
+            <strong style="color: #fbbf24;">{{ metrics.tests.pending + metrics.tests.inconclusive }} Procedures</strong>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top: 1rem; font-size: 0.75rem; color: var(--text-muted);">
+        Testing adheres to AICPA SSAE 18 sampling and ISO 27001 Clause 9.2 monitoring.
+      </div>
+    </div>
+
+    <!-- Column 3: Audit Findings & CAPA Progress -->
+    <div class="glass-card" style="padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between;">
+      <div>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.85rem;">
+          <h3 style="font-size: 1.1rem; font-weight: 700; color: #fff;">
+            Audit Findings &amp; CAPA SLA
+          </h3>
+          <a href="/findings" style="font-size: 0.78rem; color: var(--accent-cyan); text-decoration: none;">Findings Tracker &rarr;</a>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.85rem;">
+          <div style="display: flex; justify-content: space-between; padding: 0.5rem; background: rgba(10, 14, 23, 0.4); border-radius: var(--radius-sm);">
+            <span style="color: var(--text-secondary);">Total Logged Deficiencies:</span>
+            <strong style="color: #fff;">{{ metrics.findings.total }} Findings</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding: 0.5rem; background: rgba(10, 14, 23, 0.4); border-radius: var(--radius-sm);">
+            <span style="color: var(--text-secondary);">Open / Under Remediation:</span>
+            <strong style="color: #fbbf24;">{{ metrics.findings.open + metrics.findings.in_remediation }} Active</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding: 0.5rem; background: rgba(10, 14, 23, 0.4); border-radius: var(--radius-sm);">
+            <span style="color: var(--text-secondary);">Retesting &amp; Verification:</span>
+            <strong style="color: #38bdf8;">{{ metrics.findings.retesting }} Pending</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding: 0.5rem; background: rgba(10, 14, 23, 0.4); border-radius: var(--radius-sm);">
+            <span style="color: var(--text-secondary);">Closed &amp; Verified Remediated:</span>
+            <strong style="color: #34d399;">{{ metrics.findings.closed }} Resolved</strong>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top: 1rem; font-size: 0.75rem; color: var(--text-muted);">
+        Active Critical/High: <span style="color: {% if (metrics.findings.critical_active + metrics.findings.high_active) > 0 %}#f87171{% else %}#34d399{% endif %}; font-weight: 700;">{{ metrics.findings.critical_active + metrics.findings.high_active }} Items</span>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

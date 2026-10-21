@@ -1,0 +1,367 @@
+{% extends "base.html" %}
+
+{% block title %}Finding {{ finding.finding_id }}: {{ finding.title }} | CyberGRC{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2.5rem;">
+  <!-- Breadcrumb & Top Bar -->
+  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+    <div>
+      <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.4rem;">
+        <a href="/findings" style="color: var(--accent-cyan); text-decoration: none;">&larr; Back to Findings Register</a>
+        <span>&bull;</span>
+        <span>{{ finding.finding_id }}</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+        <h1 style="font-size: 1.85rem; font-weight: 800; letter-spacing: -0.02em; color: #fff;">
+          {{ finding.finding_id }} &bull; {{ finding.title }}
+        </h1>
+        <span class="badge-tag finding-severity-{{ finding.severity.value }}" style="font-weight: 800; font-size: 0.78rem; margin: 0;">
+          {{ finding.severity.value }} SEVERITY
+        </span>
+        <span class="badge-tag finding-status-{{ finding.status.value }}" style="font-weight: 800; font-size: 0.78rem; margin: 0;">
+          {{ finding.status.value.replace('_', ' ') }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+      {% if user and user.role.value in ['ORG_ADMIN', 'GRC_ANALYST', 'CONTROL_OWNER'] and finding.status.value != 'CLOSED' %}
+      <button
+        onclick="openActionModal()"
+        style="background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border-accent); color: #fff; padding: 0.65rem 1.25rem; border-radius: var(--radius-sm); font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.45rem; transition: var(--transition-smooth);"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+        </svg>
+        Add Corrective Action (CAPA)
+      </button>
+      {% endif %}
+
+      {% if user and user.role.value in ['ORG_ADMIN', 'AUDITOR'] and finding.status.value != 'CLOSED' %}
+      <button
+        onclick="openCloseModal()"
+        style="background: linear-gradient(135deg, #10b981, #059669); color: #fff; padding: 0.65rem 1.25rem; border-radius: var(--radius-sm); font-weight: 700; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 0.45rem; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); transition: var(--transition-smooth);"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+        </svg>
+        Sign-off &amp; Close Finding
+      </button>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Closure Alert Banner if already closed -->
+  {% if finding.status.value == 'CLOSED' %}
+  <div class="verification-banner-valid" style="margin-bottom: 2rem;">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink: 0;">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+    </svg>
+    <div>
+      <strong style="color: #fff;">Deficiency Remediated &amp; Verified Closed</strong>
+      <p style="margin: 0.2rem 0 0 0; font-size: 0.82rem; color: #a7f3d0;">
+        Closed on {{ finding.closed_at.strftime('%B %d, %Y at %H:%M UTC') if finding.closed_at else 'Verified' }}
+        by {{ finding.closed_by.full_name if finding.closed_by else 'Lead Auditor' }}.
+      </p>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- 2-Column Responsive Layout -->
+  <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.75rem; align-items: start;">
+    <!-- Left Column: Root Cause, Business Impact, CAPA Progress -->
+    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+      <!-- Root-Cause Analysis Card -->
+      <div class="glass-card" style="padding: 1.75rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.85rem;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--accent-amber)">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+          </svg>
+          <h2 style="font-size: 1.15rem; font-weight: 700; color: #fff;">
+            Root-Cause Analysis (5-Whys / Process Breakdown)
+          </h2>
+        </div>
+        <p style="font-size: 0.9rem; line-height: 1.6; color: var(--text-secondary); background: rgba(10, 14, 23, 0.5); padding: 1rem; border-radius: var(--radius-sm); border-left: 3px solid var(--accent-amber);">
+          {{ finding.root_cause }}
+        </p>
+      </div>
+
+      <!-- Business & Compliance Impact Card -->
+      <div class="glass-card" style="padding: 1.75rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.85rem;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="#f87171">
+            <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+          </svg>
+          <h2 style="font-size: 1.15rem; font-weight: 700; color: #fff;">
+            Audit &amp; Business Exposure Impact
+          </h2>
+        </div>
+        <p style="font-size: 0.9rem; line-height: 1.6; color: var(--text-secondary); background: rgba(10, 14, 23, 0.5); padding: 1rem; border-radius: var(--radius-sm); border-left: 3px solid #f87171;">
+          {{ finding.business_impact }}
+        </p>
+      </div>
+
+      <!-- Corrective Action Plans (CAPA) Section -->
+      <div class="glass-card" style="padding: 1.75rem;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem;">
+          <div>
+            <h2 style="font-size: 1.2rem; font-weight: 700; color: #fff;">
+              Corrective Action Plans (CAPA)
+            </h2>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.15rem;">
+              Discrete, assignable remediation tasks tracked to verified completion.
+            </p>
+          </div>
+          <span class="badge-tag" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); font-weight: 700; margin: 0;">
+            {{ finding.corrective_actions | length }} Action Items
+          </span>
+        </div>
+
+        {% if finding.corrective_actions | length == 0 %}
+        <div style="text-align: center; padding: 2rem; color: var(--text-muted); background: rgba(10, 14, 23, 0.4); border-radius: var(--radius-sm);">
+          No Corrective Action Plans recorded yet. Click "Add Corrective Action (CAPA)" to formulate remediation steps.
+        </div>
+        {% else %}
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+          {% for a in finding.corrective_actions %}
+          <div class="capa-card">
+            <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 0.75rem;">
+              <div>
+                <span class="badge-tag action-status-{{ a.status.value }}" style="font-weight: 800; font-size: 0.72rem; margin: 0 0 0.4rem 0;">
+                  {{ a.status.value.replace('_', ' ') }}
+                </span>
+                <div style="font-weight: 600; color: #fff; font-size: 0.92rem; line-height: 1.45;">
+                  {{ a.action_plan }}
+                </div>
+              </div>
+
+              <!-- Status Update Form for Assignee / Auditor -->
+              {% if user and user.role.value in ['ORG_ADMIN', 'GRC_ANALYST', 'CONTROL_OWNER', 'AUDITOR'] and finding.status.value != 'CLOSED' %}
+              <form method="POST" action="/findings/{{ finding.finding_id }}/actions/{{ a.id }}/update" style="display: inline-flex; align-items: center; gap: 0.35rem; flex-shrink: 0;">
+                <select name="status_val" onchange="this.form.submit()" style="padding: 0.35rem 0.6rem; background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; font-size: 0.75rem; cursor: pointer;">
+                  <option value="OPEN" {% if a.status.value == 'OPEN' %}selected{% endif %}>OPEN</option>
+                  <option value="IN_PROGRESS" {% if a.status.value == 'IN_PROGRESS' %}selected{% endif %}>IN_PROGRESS</option>
+                  <option value="IMPLEMENTED" {% if a.status.value == 'IMPLEMENTED' %}selected{% endif %}>IMPLEMENTED</option>
+                  <option value="VERIFIED" {% if a.status.value == 'VERIFIED' %}selected{% endif %}>VERIFIED</option>
+                  <option value="CANCELLED" {% if a.status.value == 'CANCELLED' %}selected{% endif %}>CANCELLED</option>
+                </select>
+              </form>
+              {% endif %}
+            </div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; font-size: 0.78rem; color: var(--text-muted); border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 0.65rem;">
+              <div>
+                <span style="color: var(--text-secondary);">Owner:</span>
+                <strong style="color: #fff;">{{ a.owner.full_name if a.owner else 'Unassigned' }}</strong>
+              </div>
+              <div>
+                <span style="color: var(--text-secondary);">Target Due:</span>
+                <span style="color: #fff; font-family: var(--font-mono);">{{ a.target_completion_date.strftime('%Y-%m-%d') if a.target_completion_date else 'N/A' }}</span>
+              </div>
+              {% if a.actual_completion_date %}
+              <div>
+                <span style="color: var(--text-secondary);">Completed:</span>
+                <span style="color: #34d399; font-family: var(--font-mono);">{{ a.actual_completion_date.strftime('%Y-%m-%d') }}</span>
+              </div>
+              {% endif %}
+            </div>
+
+            {% if a.notes %}
+            <div style="margin-top: 0.5rem; font-size: 0.75rem; color: var(--text-secondary); background: rgba(0, 0, 0, 0.2); padding: 0.4rem 0.6rem; border-radius: var(--radius-sm);">
+              <strong>Notes:</strong> {{ a.notes }}
+            </div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Right Column: Control Binding, Test Evidence, Metadata -->
+    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+      <!-- Linked Security Control Card -->
+      <div class="glass-card" style="padding: 1.5rem; border-top: 3px solid var(--accent-cyan);">
+        <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.4rem;">
+          Deficient Security Control
+        </div>
+        {% if finding.control %}
+        <a href="/controls/{{ finding.control.control_id }}" style="font-size: 1.15rem; font-weight: 700; color: #38bdf8; text-decoration: none; display: block; font-family: var(--font-mono); margin-bottom: 0.25rem;">
+          {{ finding.control.control_id }}
+        </a>
+        <div style="font-weight: 600; color: #fff; font-size: 0.88rem; margin-bottom: 0.5rem;">
+          {{ finding.control.name }}
+        </div>
+        <div style="font-size: 0.78rem; color: var(--text-secondary); line-height: 1.4;">
+          {{ finding.control.description[:120] }}...
+        </div>
+        {% else %}
+        <div style="color: var(--text-muted); font-size: 0.85rem;">No linked control.</div>
+        {% endif %}
+      </div>
+
+      <!-- Linked Control Test Execution Card -->
+      <div class="glass-card" style="padding: 1.5rem;">
+        <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.4rem;">
+          Audit Testing Trigger
+        </div>
+        {% if finding.control_test %}
+        <div style="font-weight: 700; color: #fff; font-size: 0.9rem; margin-bottom: 0.35rem;">
+          {{ finding.control_test.test_title }}
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.65rem;">
+          <span class="badge-tag test-pill-{{ finding.control_test.result.value }}" style="font-weight: 800; font-size: 0.72rem; margin: 0;">
+            {{ finding.control_test.result.value }}
+          </span>
+          <span style="font-size: 0.75rem; color: #f87171; font-weight: 600;">
+            {{ finding.control_test.exceptions_identified }} Exception(s)
+          </span>
+        </div>
+        <div style="font-size: 0.75rem; color: var(--text-secondary); line-height: 1.35;">
+          <strong>Procedure:</strong> {{ finding.control_test.test_procedure[:110] }}...
+        </div>
+        {% else %}
+        <div style="color: var(--text-muted); font-size: 0.82rem; font-style: italic;">
+          Direct auditor discovery (No automated test log attached).
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Remediation Governance & Ownership -->
+      <div class="glass-card" style="padding: 1.5rem;">
+        <h3 style="font-size: 0.95rem; font-weight: 700; color: #fff; margin-bottom: 0.85rem;">
+          Remediation Ownership &amp; SLA
+        </h3>
+        <div style="display: flex; flex-direction: column; gap: 0.65rem; font-size: 0.82rem;">
+          <div>
+            <span style="color: var(--text-muted);">Assigned Owner:</span>
+            <div style="color: #fff; font-weight: 600; margin-top: 0.1rem;">
+              {{ finding.owner.full_name if finding.owner else 'Unassigned' }}
+            </div>
+          </div>
+          <div>
+            <span style="color: var(--text-muted);">Target Due Date:</span>
+            <div style="color: {% if finding.due_date and finding.due_date < finding.created_at and finding.status.value != 'CLOSED' %}#f87171{% else %}#fff{% endif %}; font-family: var(--font-mono); margin-top: 0.1rem;">
+              {{ finding.due_date.strftime('%B %d, %Y') if finding.due_date else 'No SLA Date Set' }}
+            </div>
+          </div>
+          <div>
+            <span style="color: var(--text-muted);">Finding Logged:</span>
+            <div style="color: var(--text-secondary); font-family: var(--font-mono); margin-top: 0.1rem;">
+              {{ finding.created_at.strftime('%Y-%m-%d %H:%M UTC') }}
+            </div>
+          </div>
+          <div>
+            <span style="color: var(--text-muted);">Last Updated:</span>
+            <div style="color: var(--text-secondary); font-family: var(--font-mono); margin-top: 0.1rem;">
+              {{ finding.updated_at.strftime('%Y-%m-%d %H:%M UTC') }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- Modal: Add Corrective Action (CAPA)                                       -->
+<!-- ========================================================================= -->
+<div id="actionModal" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); backdrop-filter: var(--glass-blur); z-index: 200; align-items: center; justify-content: center; padding: 1.5rem;">
+  <div class="glass-card" style="width: 100%; max-width: 580px; max-height: 90vh; overflow-y: auto; padding: 2rem;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.75rem;">
+      <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff;">Formulate Corrective Action (CAPA)</h3>
+      <button onclick="closeActionModal()" style="background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
+    </div>
+
+    <form method="POST" action="/findings/{{ finding.finding_id }}/actions" style="display: flex; flex-direction: column; gap: 1.15rem;">
+      <div>
+        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Remediation Action Plan Description</label>
+        <textarea name="action_plan" required rows="3" placeholder="Enact automated SCP (Service Control Policy) in AWS Organizations preventing creation of IAM users without MFA active..." style="width: 100%; padding: 0.65rem; background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; font-size: 0.88rem;"></textarea>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div>
+          <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Action Owner</label>
+          <select name="owner_id" style="width: 100%; padding: 0.65rem; background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; font-size: 0.88rem;">
+            {% for u in users %}
+            <option value="{{ u.id }}">{{ u.full_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Target Completion Date</label>
+          <input type="date" name="target_completion_date" required style="width: 100%; padding: 0.65rem; background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; font-size: 0.88rem;">
+        </div>
+      </div>
+
+      <div>
+        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Remediation Working Notes (Optional)</label>
+        <textarea name="notes" rows="2" placeholder="Will require coordinating with external contractors during maintenance window..." style="width: 100%; padding: 0.65rem; background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; font-size: 0.88rem;"></textarea>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1rem;">
+        <button type="button" onclick="closeActionModal()" style="padding: 0.65rem 1.25rem; background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; cursor: pointer;">
+          Cancel
+        </button>
+        <button type="submit" style="padding: 0.65rem 1.25rem; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-indigo)); border: none; border-radius: var(--radius-sm); color: #fff; font-weight: 700; cursor: pointer;">
+          Commit Action Plan
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- Modal: Sign-off & Close Finding                                           -->
+<!-- ========================================================================= -->
+<div id="closeModal" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); backdrop-filter: var(--glass-blur); z-index: 200; align-items: center; justify-content: center; padding: 1.5rem;">
+  <div class="glass-card" style="width: 100%; max-width: 580px; max-height: 90vh; overflow-y: auto; padding: 2rem;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.75rem;">
+      <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff;">Auditor Sign-off &amp; Finding Closure</h3>
+      <button onclick="closeCloseModal()" style="background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
+    </div>
+
+    <form method="POST" action="/findings/{{ finding.finding_id }}/close" style="display: flex; flex-direction: column; gap: 1.15rem;">
+      <div>
+        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Resolution Status</label>
+        <select name="resolution_status" required style="width: 100%; padding: 0.65rem; background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; font-size: 0.88rem;">
+          <option value="CLOSED">CLOSED (Remediation Fully Implemented &amp; Retested)</option>
+          <option value="RISK_ACCEPTED">RISK_ACCEPTED (Formal Executive Risk Acceptance Documented)</option>
+        </select>
+      </div>
+
+      <div>
+        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Auditor Verification Statement &amp; Retesting Justification</label>
+        <textarea name="closure_notes" required rows="4" placeholder="Auditor retested sample of 25 IAM identities post-remediation. Verified 100% compliance with MFA policy. Evidence uploaded to vault under REF-MFA-2026. Non-conformity resolved." style="width: 100%; padding: 0.65rem; background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; font-size: 0.88rem;"></textarea>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1rem;">
+        <button type="button" onclick="closeCloseModal()" style="padding: 0.65rem 1.25rem; background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; cursor: pointer;">
+          Cancel
+        </button>
+        <button type="submit" style="padding: 0.65rem 1.25rem; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: var(--radius-sm); color: #fff; font-weight: 700; cursor: pointer;">
+          Authorize Finding Closure
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openActionModal() {
+  document.getElementById('actionModal').style.display = 'flex';
+}
+function closeActionModal() {
+  document.getElementById('actionModal').style.display = 'none';
+}
+function openCloseModal() {
+  document.getElementById('closeModal').style.display = 'flex';
+}
+function closeCloseModal() {
+  document.getElementById('closeModal').style.display = 'none';
+}
+</script>
+{% endblock %}

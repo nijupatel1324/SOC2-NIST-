@@ -1,0 +1,460 @@
+{% extends "base.html" %}
+
+{% block title %}Audit Projects & Control Testing | CyberGRC{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2.5rem;">
+  <!-- Header Bar -->
+  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+    <div>
+      <div class="hero-pill" style="margin-bottom: 0.5rem;">
+        Module G &bull; Audit Campaigns & Control Testing Engine
+      </div>
+      <h1 style="font-size: 2.1rem; font-weight: 800; letter-spacing: -0.02em;">
+        Audit Projects & Control Testing
+      </h1>
+      <p style="color: var(--text-secondary); max-width: 800px; font-size: 0.92rem; margin-top: 0.25rem;">
+        Plan compliance audits, define sampling objectives, execute testing procedures (Pass / Fail / Inconclusive), and record findings with linked cryptographic evidence.
+      </p>
+    </div>
+
+    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+      {% if user and user.role.value in ['ORG_ADMIN', 'GRC_ANALYST', 'AUDITOR'] %}
+      <button
+        onclick="openProjectModal()"
+        style="background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border-accent); color: #fff; padding: 0.7rem 1.2rem; border-radius: var(--radius-sm); font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; transition: var(--transition-smooth);"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+        </svg>
+        New Audit Campaign
+      </button>
+
+      <button
+        onclick="openTestModal()"
+        style="background: linear-gradient(135deg, var(--accent-cyan), var(--accent-indigo)); color: #fff; padding: 0.7rem 1.3rem; border-radius: var(--radius-sm); font-weight: 700; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3); transition: var(--transition-smooth);"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+        </svg>
+        Record Control Test
+      </button>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Regulatory Boundary Disclaimer Alert -->
+  <div class="regulatory-disclaimer" style="margin-bottom: 2rem;">
+    <div style="display: flex; align-items: flex-start; gap: 0.85rem;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="color: var(--accent-amber); flex-shrink: 0; margin-top: 0.15rem;">
+        <path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 16h2v2h-2zm0-6h2v4h-2z"/>
+      </svg>
+      <div>
+        <strong style="color: #fff; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;">
+          Independent Assurance & Certification Notice
+        </strong>
+        <p style="margin: 0.25rem 0 0 0; font-size: 0.8rem; line-height: 1.45; color: var(--text-secondary);">
+          Internal audit testing establishes operational compliance and prepares your security posture. <strong>Software cannot issue official SOC 2 Type I/II examination reports</strong> (which strictly require an independent licensed CPA firm under AICPA SSAE 18) or <strong>ISO/IEC 27001 certificates</strong> (which require an accredited certification body registrar). NIST CSF 2.0 serves as voluntary guidance.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary KPI Metrics Row -->
+  <div class="metrics-row" style="margin-bottom: 2rem;">
+    <div class="metric-box">
+      <div class="metric-label">Total Tests Executed</div>
+      <div class="metric-value" style="color: #fff;">{{ counts.ALL }}</div>
+      <div class="metric-sub" style="color: var(--text-muted);">Across all audit scopes</div>
+    </div>
+    <div class="metric-box">
+      <div class="metric-label">Passed Tests</div>
+      <div class="metric-value" style="color: #34d399;">{{ counts.PASS }}</div>
+      <div class="metric-sub" style="color: #6ee7b7;">Operating effectively</div>
+    </div>
+    <div class="metric-box">
+      <div class="metric-label">Failed Tests</div>
+      <div class="metric-value" style="color: #f87171;">{{ counts.FAIL }}</div>
+      <div class="metric-sub" style="color: #fca5a5;">Exceptions / Gaps identified</div>
+    </div>
+    <div class="metric-box">
+      <div class="metric-label">Pending / Inconclusive</div>
+      <div class="metric-value" style="color: #fbbf24;">{{ counts.PENDING + counts.INCONCLUSIVE }}</div>
+      <div class="metric-sub" style="color: #fde68a;">Requires further sample evidence</div>
+    </div>
+  </div>
+
+  <!-- Section: Active Audit Campaigns -->
+  <div style="margin-bottom: 2.5rem;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+      <h2 style="font-size: 1.35rem; font-weight: 700; color: #fff;">
+        Active Audit Campaigns & Scopes
+      </h2>
+      <span style="font-size: 0.82rem; color: var(--text-muted);">
+        {{ projects | length }} Active Campaigns
+      </span>
+    </div>
+
+    {% if projects | length == 0 %}
+    <div class="glass-card" style="padding: 2rem; text-align: center; color: var(--text-muted);">
+      No audit campaigns configured yet. Click "New Audit Campaign" to initialize an audit scope.
+    </div>
+    {% else %}
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem;">
+      {% for p in projects %}
+      <div class="glass-card" style="padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between; border-left: 3px solid var(--accent-cyan);">
+        <div>
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+            <span class="badge-tag" style="background: rgba(6, 182, 212, 0.15); color: var(--accent-cyan); border: 1px solid rgba(6, 182, 212, 0.3); font-weight: 700; font-size: 0.75rem; margin: 0;">
+              {{ p.framework.code if p.framework else 'CYBER' }}
+            </span>
+            <span class="badge-tag status-pill-IMPLEMENTED" style="font-size: 0.72rem; margin: 0;">
+              {{ p.status }}
+            </span>
+          </div>
+
+          <h3 style="font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 0.35rem;">
+            {{ p.name }}
+          </h3>
+          <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.85rem;">
+            Type: <strong>{{ p.audit_type.replace('_', ' ') }}</strong>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.8rem; color: var(--text-muted); background: rgba(10, 14, 23, 0.4); padding: 0.75rem; border-radius: var(--radius-sm);">
+            <div>
+              <span style="color: var(--text-secondary);">Audit Period:</span>
+              <span style="color: #fff; font-family: var(--font-mono);">
+                {{ p.period_start.strftime('%b %d, %Y') if p.period_start else 'N/A' }} &rarr; {{ p.period_end.strftime('%b %d, %Y') if p.period_end else 'N/A' }}
+              </span>
+            </div>
+            <div>
+              <span style="color: var(--text-secondary);">Lead Auditor:</span>
+              <span style="color: #fff;">
+                {{ p.lead_auditor.full_name if p.lead_auditor else 'Unassigned' }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 1.25rem; padding-top: 0.75rem; border-top: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem;">
+          <span style="color: var(--text-muted);">
+            {{ p.tests | length }} Control Tests Recorded
+          </span>
+          <span style="color: var(--accent-cyan); font-weight: 600;">
+            {{ p.framework.name if p.framework else '' }}
+          </span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Filter Pills Bar -->
+  <div class="status-section" style="padding: 1.25rem; margin-bottom: 1.5rem;">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+      <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
+        <a href="/audits" class="badge-tag" style="padding: 0.35rem 0.75rem; border-radius: var(--radius-full); font-size: 0.78rem; {% if active_result == 'ALL' %}background: rgba(255, 255, 255, 0.15); color: #fff; font-weight: 700;{% endif %}">
+          All Tests ({{ counts.ALL }})
+        </a>
+        <a href="/audits?result_filter=PASS" class="badge-tag" style="padding: 0.35rem 0.75rem; border-radius: var(--radius-full); font-size: 0.78rem; {% if active_result == 'PASS' %}background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: rgba(16, 185, 129, 0.4); font-weight: 700;{% endif %}">
+          Passed ({{ counts.PASS }})
+        </a>
+        <a href="/audits?result_filter=FAIL" class="badge-tag" style="padding: 0.35rem 0.75rem; border-radius: var(--radius-full); font-size: 0.78rem; {% if active_result == 'FAIL' %}background: rgba(239, 68, 68, 0.2); color: #f87171; border-color: rgba(239, 68, 68, 0.4); font-weight: 700;{% endif %}">
+          Failed ({{ counts.FAIL }})
+        </a>
+        <a href="/audits?result_filter=PENDING" class="badge-tag" style="padding: 0.35rem 0.75rem; border-radius: var(--radius-full); font-size: 0.78rem; {% if active_result == 'PENDING' %}background: rgba(148, 163, 184, 0.2); color: #94a3b8; border-color: rgba(148, 163, 184, 0.4); font-weight: 700;{% endif %}">
+          Pending ({{ counts.PENDING }})
+        </a>
+        <a href="/audits?result_filter=INCONCLUSIVE" class="badge-tag" style="padding: 0.35rem 0.75rem; border-radius: var(--radius-full); font-size: 0.78rem; {% if active_result == 'INCONCLUSIVE' %}background: rgba(234, 179, 8, 0.2); color: #facc15; border-color: rgba(234, 179, 8, 0.4); font-weight: 700;{% endif %}">
+          Inconclusive ({{ counts.INCONCLUSIVE }})
+        </a>
+      </div>
+
+      <div style="font-size: 0.8rem; color: var(--text-muted);">
+        Auditing Standard: AICPA SOC 2 &bull; ISO 27001 Clause 9.2 &bull; NIST CSF 2.0 GV.MT
+      </div>
+    </div>
+  </div>
+
+  <!-- Control Testing Execution Register Table -->
+  <div class="grc-table-container">
+    <table class="grc-table">
+      <thead>
+        <tr>
+          <th style="width: 25%;">Test Title & Objective</th>
+          <th style="width: 16%;">Target Control</th>
+          <th style="width: 14%;">Audit Scope</th>
+          <th style="width: 12%;">Sampling / Exceptions</th>
+          <th style="width: 11%;">Test Result</th>
+          <th style="width: 22%;">Evidence & Tester</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if tests | length == 0 %}
+        <tr>
+          <td colspan="6" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+            No control tests match your filter criteria.
+          </td>
+        </tr>
+        {% else %}
+        {% for t in tests %}
+        <tr>
+          <td>
+            <div style="font-weight: 700; color: #fff; font-size: 0.88rem;">
+              {{ t.test_title }}
+            </div>
+            <div style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 0.2rem; line-height: 1.35;">
+              <strong>Objective:</strong> {{ t.test_objective }}
+            </div>
+            <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.25rem;">
+              <strong>Procedure:</strong> {{ t.test_procedure[:120] }}{% if t.test_procedure | length > 120 %}...{% endif %}
+            </div>
+          </td>
+          <td>
+            {% if t.control %}
+            <a href="/controls/{{ t.control.control_id }}" style="font-family: var(--font-mono); font-size: 0.82rem; font-weight: 700; color: #38bdf8; display: block;">
+              {{ t.control.control_id }}
+            </a>
+            <span style="font-size: 0.75rem; color: var(--text-secondary);">
+              {{ t.control.name }}
+            </span>
+            {% else %}
+            <span style="color: var(--text-muted); font-size: 0.78rem;">Unknown</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if t.audit_project %}
+            <div style="font-weight: 600; color: #fff; font-size: 0.8rem;">
+              {{ t.audit_project.name }}
+            </div>
+            <span class="badge-tag" style="margin: 0.2rem 0 0 0; padding: 0.12rem 0.35rem; font-size: 0.68rem;">
+              {{ t.audit_project.framework.code if t.audit_project.framework else 'AUDIT' }}
+            </span>
+            {% else %}
+            <span style="color: var(--text-muted); font-size: 0.78rem; font-style: italic;">Ad-hoc / Continuous</span>
+            {% endif %}
+          </td>
+          <td>
+            <div style="font-family: var(--font-mono); font-size: 0.8rem; color: #fff;">
+              Sample: <strong>{{ t.sample_size }}</strong>
+            </div>
+            <div style="font-size: 0.75rem; margin-top: 0.2rem;">
+              {% if t.exceptions_identified > 0 %}
+              <span style="color: #f87171; font-weight: 700;">
+                {{ t.exceptions_identified }} Exception(s)
+              </span>
+              {% else %}
+              <span style="color: #34d399;">0 Exceptions</span>
+              {% endif %}
+            </div>
+          </td>
+          <td>
+            <span class="badge-tag test-pill-{{ t.result.value }}" style="font-weight: 800; font-size: 0.75rem; margin: 0;">
+              {{ t.result.value }}
+            </span>
+          </td>
+          <td>
+            {% if t.evidence %}
+            <div style="display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.35rem;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="color: var(--accent-cyan); flex-shrink: 0;">
+                <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+              </svg>
+              <a href="/api/v1/evidence/{{ t.evidence.id }}/download" style="font-size: 0.78rem; color: #38bdf8; text-decoration: underline; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px;" title="{{ t.evidence.file_name }}">
+                {{ t.evidence.file_name }}
+              </a>
+            </div>
+            {% else %}
+            <div style="color: var(--text-muted); font-size: 0.75rem; font-style: italic; margin-bottom: 0.25rem;">
+              No Artifact Attached
+            </div>
+            {% endif %}
+
+            <div style="font-size: 0.72rem; color: var(--text-muted);">
+              By: <span style="color: var(--text-secondary);">{{ t.tested_by.full_name if t.tested_by else 'Auditor' }}</span>
+              <br>
+              On: {{ t.tested_at.strftime('%Y-%m-%d') if t.tested_at else 'N/A' }}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- Modal: New Audit Project Campaign                                         -->
+<!-- ========================================================================= -->
+<div id="projectModal" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); backdrop-filter: var(--glass-blur); z-index: 200; align-items: center; justify-content: center; padding: 1.5rem;">
+  <div class="glass-card" style="width: 100%; max-width: 580px; max-height: 90vh; overflow-y: auto; padding: 2rem;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.75rem;">
+      <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff;">Create Audit Project Campaign</h3>
+      <button onclick="closeProjectModal()" style="background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
+    </div>
+
+    <form method="POST" action="/audits/projects" style="display: flex; flex-direction: column; gap: 1.15rem;">
+      <div>
+        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Audit Campaign Name</label>
+        <input type="text" name="name" required placeholder="2026 SOC 2 Type II Annual Examination" style="width: 100%; padding: 0.65rem; background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; font-size: 0.88rem;">
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div>
+          <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Target Framework</label>
+          <select name="framework_id" required style="width: 100%; padding: 0.65rem; background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; font-size: 0.88rem;">
+            {% for f in frameworks %}
+            <option value="{{ f.id }}">{{ f.code }} &bull; {{ f.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Audit Scope Type</label>
+          <select name="audit_type" required style="width: 100%; padding: 0.65rem; background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; font-size: 0.88rem;">
+            <option value="INTERNAL_READINESS">Internal Readiness Assessment</option>
+            <option value="SOC2_TYPE_I">SOC 2 Type I Readiness</option>
+            <option value="SOC2_TYPE_II">SOC 2 Type II Audit</option>
+            <option value="ISO27001_SURVEILLANCE">ISO 27001 Surveillance Audit</option>
+            <option value="ISO27001_RECERTIFICATION">ISO 27001 Recertification Audit</option>
+            <option value="NIST_CSF_EVALUATION">NIST CSF 2.0 Maturity Review</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div>
+          <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Audit Period Start</label>
+          <input type="date" name="period_start" required style="width: 100%; padding: 0.65rem; background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; font-size: 0.88rem;">
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Audit Period End</label>
+          <input type="date" name="period_end" required style="width: 100%; padding: 0.65rem; background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; font-size: 0.88rem;">
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1rem;">
+        <button type="button" onclick="closeProjectModal()" style="padding: 0.65rem 1.25rem; background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; cursor: pointer;">
+          Cancel
+        </button>
+        <button type="submit" style="padding: 0.65rem 1.25rem; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-indigo)); border: none; border-radius: var(--radius-sm); color: #fff; font-weight: 700; cursor: pointer;">
+          Initialize Campaign
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- Modal: Record Control Test Execution                                      -->
+<!-- ========================================================================= -->
+<div id="testModal" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); backdrop-filter: var(--glass-blur); z-index: 200; align-items: center; justify-content: center; padding: 1.5rem;">
+  <div class="glass-card" style="width: 100%; max-width: 650px; max-height: 90vh; overflow-y: auto; padding: 2rem;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.75rem;">
+      <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff;">Record Control Test Execution</h3>
+      <button onclick="closeTestModal()" style="background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
+    </div>
+
+    <form method="POST" action="/audits/tests" style="display: flex; flex-direction: column; gap: 1.15rem;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div>
+          <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Target Security Control</label>
+          <select name="control_id" required style="width: 100%; padding: 0.65rem; background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; font-size: 0.88rem;">
+            {% for c in controls %}
+            <option value="{{ c.id }}">{{ c.control_id }} &bull; {{ c.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Audit Project Scope (Optional)</label>
+          <select name="audit_project_id" style="width: 100%; padding: 0.65rem; background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; font-size: 0.88rem;">
+            <option value="">-- Continuous / Ad-hoc Testing --</option>
+            {% for p in projects %}
+            <option value="{{ p.id }}">{{ p.name }} ({{ p.framework.code if p.framework else '' }})</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Test Procedure Title</label>
+        <input type="text" name="test_title" required placeholder="Verification of Multi-Factor Authentication Enforcement on All IAM Users" style="width: 100%; padding: 0.65rem; background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; font-size: 0.88rem;">
+      </div>
+
+      <div>
+        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Test Objective</label>
+        <textarea name="test_objective" required rows="2" placeholder="Confirm 100% of active IAM accounts have hardware or virtual MFA device bound." style="width: 100%; padding: 0.65rem; background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; font-size: 0.88rem;"></textarea>
+      </div>
+
+      <div>
+        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Detailed Testing Procedure Steps</label>
+        <textarea name="test_procedure" required rows="3" placeholder="1. Generated AWS IAM Credential Report via CLI. 2. Filtered users with console access enabled. 3. Evaluated mfa_active column for TRUE/FALSE." style="width: 100%; padding: 0.65rem; background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; font-size: 0.88rem;"></textarea>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+        <div>
+          <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Test Result</label>
+          <select name="result" required style="width: 100%; padding: 0.65rem; background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; font-size: 0.88rem;">
+            <option value="PASS">PASS (No Exceptions)</option>
+            <option value="FAIL">FAIL (Exceptions Found)</option>
+            <option value="PENDING">PENDING (In Progress)</option>
+            <option value="INCONCLUSIVE">INCONCLUSIVE</option>
+          </select>
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Sample Size Tested</label>
+          <input type="number" name="sample_size" value="25" min="0" style="width: 100%; padding: 0.65rem; background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; font-size: 0.88rem;">
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Exceptions Identified</label>
+          <input type="number" name="exceptions_identified" value="0" min="0" style="width: 100%; padding: 0.65rem; background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; font-size: 0.88rem;">
+        </div>
+      </div>
+
+      <div>
+        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Link Quarantined Evidence Artifact (Optional)</label>
+        <select name="evidence_id" style="width: 100%; padding: 0.65rem; background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; font-size: 0.88rem;">
+          <option value="">-- No Evidence Record Linked --</option>
+          {% for ev in evidence %}
+          <option value="{{ ev.id }}">{{ ev.title }} ({{ ev.file_name }})</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">Auditor Working Notes / Gaps</label>
+        <textarea name="notes" rows="2" placeholder="Noted 2 contractor accounts without MFA enabled during sampling window..." style="width: 100%; padding: 0.65rem; background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; font-size: 0.88rem;"></textarea>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1rem;">
+        <button type="button" onclick="closeTestModal()" style="padding: 0.65rem 1.25rem; background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; cursor: pointer;">
+          Cancel
+        </button>
+        <button type="submit" style="padding: 0.65rem 1.25rem; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-indigo)); border: none; border-radius: var(--radius-sm); color: #fff; font-weight: 700; cursor: pointer;">
+          Record Test Result
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openProjectModal() {
+  document.getElementById('projectModal').style.display = 'flex';
+}
+function closeProjectModal() {
+  document.getElementById('projectModal').style.display = 'none';
+}
+function openTestModal() {
+  document.getElementById('testModal').style.display = 'flex';
+}
+function closeTestModal() {
+  document.getElementById('testModal').style.display = 'none';
+}
+</script>
+{% endblock %}

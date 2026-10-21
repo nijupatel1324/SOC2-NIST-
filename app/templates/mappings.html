@@ -1,0 +1,354 @@
+{% extends "base.html" %}
+
+{% block title %}Cross-Framework Mapping Matrix | CyberGRC{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2.5rem;">
+  <!-- Header Bar -->
+  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.75rem;">
+    <div>
+      <div class="hero-pill" style="margin-bottom: 0.5rem;">
+        Module C &bull; Framework Mapping Engine
+      </div>
+      <h1 style="font-size: 2.1rem; font-weight: 800; letter-spacing: -0.02em;">
+        Cross-Framework Mapping Matrix
+      </h1>
+      <p style="color: var(--text-secondary); max-width: 800px; font-size: 0.92rem; margin-top: 0.25rem;">
+        Maps internal cybersecurity controls across <strong>SOC 2 Trust Services Criteria</strong>, <strong>ISO/IEC 27001:2022 Annex A</strong>, and <strong>NIST CSF 2.0</strong> to enable "Test Once, Comply with Many" efficiency.
+      </p>
+    </div>
+
+    <div style="display: flex; gap: 0.75rem; align-items: center;">
+      <!-- View Mode Selector -->
+      <div style="background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 0.25rem; display: flex; gap: 0.25rem;">
+        <a href="/mappings?view_mode=matrix{% if active_framework != 'ALL' %}&framework={{ active_framework }}{% endif %}" style="padding: 0.4rem 0.85rem; border-radius: var(--radius-sm); font-size: 0.82rem; font-weight: 600; text-decoration: none; {% if view_mode == 'matrix' %}background: var(--accent-indigo); color: #fff;{% else %}color: var(--text-muted);{% endif %}">
+          Matrix Crosswalk
+        </a>
+        <a href="/mappings?view_mode=list{% if active_framework != 'ALL' %}&framework={{ active_framework }}{% endif %}{% if active_status != 'ALL' %}&status_filter={{ active_status }}{% endif %}" style="padding: 0.4rem 0.85rem; border-radius: var(--radius-sm); font-size: 0.82rem; font-weight: 600; text-decoration: none; {% if view_mode == 'list' %}background: var(--accent-indigo); color: #fff;{% else %}color: var(--text-muted);{% endif %}">
+          Mappings Catalog ({{ mapping_counts.ALL }})
+        </a>
+      </div>
+
+      {% if user and user.role.value in ['ORG_ADMIN', 'GRC_ANALYST', 'CONTROL_OWNER', 'PLATFORM_ADMIN'] %}
+      <button
+        onclick="openMappingModal()"
+        style="background: linear-gradient(135deg, var(--accent-cyan), var(--accent-indigo)); color: #fff; padding: 0.65rem 1.25rem; border-radius: var(--radius-sm); font-weight: 700; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3); transition: var(--transition-smooth);"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+        </svg>
+        Map Control
+      </button>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if view_mode == 'matrix' %}
+  <!-- ========================================================================= -->
+  <!-- Matrix Crosswalk View: Controls vs Frameworks Side-by-Side                -->
+  <!-- ========================================================================= -->
+  <div class="status-section" style="padding: 1.25rem; margin-bottom: 1.5rem;">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
+      <div style="font-size: 0.9rem; color: var(--text-secondary);">
+        Showing <strong>{{ matrix_rows | length }}</strong> organizational controls mapped across standards:
+      </div>
+      <div style="display: flex; gap: 0.5rem; align-items: center; font-size: 0.78rem;">
+        <span class="matrix-chip matrix-chip-soc2">SOC 2 (Common Criteria)</span>
+        <span class="matrix-chip matrix-chip-iso">ISO 27001:2022 (Annex A)</span>
+        <span class="matrix-chip matrix-chip-nist">NIST CSF 2.0 (Core)</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="grc-table-container">
+    <table class="grc-table">
+      <thead>
+        <tr>
+          <th style="width: 22%;">Internal Control</th>
+          <th style="width: 12%;">Implementation</th>
+          <th style="width: 22%;">SOC 2 Mapping</th>
+          <th style="width: 22%;">ISO/IEC 27001 Mapping</th>
+          <th style="width: 22%;">NIST CSF 2.0 Mapping</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in matrix_rows %}
+        <tr>
+          <td>
+            <a href="/controls/{{ row.control_id }}" style="font-weight: 700; font-family: var(--font-mono); color: var(--accent-cyan); display: block;">
+              {{ row.control_id }}
+            </a>
+            <span style="font-size: 0.82rem; color: var(--text-primary); font-weight: 500;">
+              {{ row.control_name }}
+            </span>
+          </td>
+          <td>
+            {% if row.control_status == 'IMPLEMENTED' %}
+            <span class="badge-tag status-pill-IMPLEMENTED" style="margin: 0;">Implemented</span>
+            {% elif row.control_status == 'PARTIALLY_IMPLEMENTED' %}
+            <span class="badge-tag status-pill-PARTIALLY_IMPLEMENTED" style="margin: 0;">Partial</span>
+            {% elif row.control_status == 'NEEDS_IMPROVEMENT' %}
+            <span class="badge-tag status-pill-NEEDS_IMPROVEMENT" style="margin: 0;">Needs Impr.</span>
+            {% else %}
+            <span class="badge-tag status-pill-NOT_IMPLEMENTED" style="margin: 0;">Not Impl.</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if row.soc2_mappings | length > 0 %}
+              {% for m in row.soc2_mappings %}
+              <div class="matrix-chip matrix-chip-soc2" style="display: block; margin-bottom: 0.3rem;">
+                {{ m }}
+              </div>
+              {% endfor %}
+            {% else %}
+              <span style="color: var(--text-muted); font-size: 0.78rem; font-style: italic;">No mapping</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if row.iso27001_mappings | length > 0 %}
+              {% for m in row.iso27001_mappings %}
+              <div class="matrix-chip matrix-chip-iso" style="display: block; margin-bottom: 0.3rem;">
+                {{ m }}
+              </div>
+              {% endfor %}
+            {% else %}
+              <span style="color: var(--text-muted); font-size: 0.78rem; font-style: italic;">No mapping</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if row.nist_csf_mappings | length > 0 %}
+              {% for m in row.nist_csf_mappings %}
+              <div class="matrix-chip matrix-chip-nist" style="display: block; margin-bottom: 0.3rem;">
+                {{ m }}
+              </div>
+              {% endfor %}
+            {% else %}
+              <span style="color: var(--text-muted); font-size: 0.78rem; font-style: italic;">No mapping</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% else %}
+  <!-- ========================================================================= -->
+  <!-- Mappings Catalog List View: Detailed Approval Workflow & Audit Trail       -->
+  <!-- ========================================================================= -->
+  <div class="status-section" style="padding: 1.25rem; margin-bottom: 1.5rem;">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+      <!-- Framework Filter Tabs -->
+      <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
+        <a href="/mappings?view_mode=list{% if active_status != 'ALL' %}&status_filter={{ active_status }}{% endif %}" class="badge-tag" style="padding: 0.35rem 0.75rem; border-radius: var(--radius-full); font-size: 0.78rem; {% if active_framework == 'ALL' %}background: rgba(56, 189, 248, 0.2); color: #38bdf8; border-color: rgba(56, 189, 248, 0.4); font-weight: 700;{% endif %}">
+          All Frameworks
+        </a>
+        <a href="/mappings?view_mode=list&framework=SOC2{% if active_status != 'ALL' %}&status_filter={{ active_status }}{% endif %}" class="badge-tag" style="padding: 0.35rem 0.75rem; border-radius: var(--radius-full); font-size: 0.78rem; {% if active_framework == 'SOC2' %}background: rgba(56, 189, 248, 0.2); color: #38bdf8; border-color: rgba(56, 189, 248, 0.4); font-weight: 700;{% endif %}">
+          SOC 2
+        </a>
+        <a href="/mappings?view_mode=list&framework=ISO27001{% if active_status != 'ALL' %}&status_filter={{ active_status }}{% endif %}" class="badge-tag" style="padding: 0.35rem 0.75rem; border-radius: var(--radius-full); font-size: 0.78rem; {% if active_framework == 'ISO27001' %}background: rgba(168, 85, 247, 0.2); color: #c084fc; border-color: rgba(168, 85, 247, 0.4); font-weight: 700;{% endif %}">
+          ISO/IEC 27001
+        </a>
+        <a href="/mappings?view_mode=list&framework=NIST_CSF{% if active_status != 'ALL' %}&status_filter={{ active_status }}{% endif %}" class="badge-tag" style="padding: 0.35rem 0.75rem; border-radius: var(--radius-full); font-size: 0.78rem; {% if active_framework == 'NIST_CSF' %}background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: rgba(16, 185, 129, 0.4); font-weight: 700;{% endif %}">
+          NIST CSF 2.0
+        </a>
+      </div>
+
+      <!-- Status Filter Tabs -->
+      <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
+        <a href="/mappings?view_mode=list{% if active_framework != 'ALL' %}&framework={{ active_framework }}{% endif %}" class="badge-tag" style="padding: 0.35rem 0.75rem; border-radius: var(--radius-full); font-size: 0.78rem; {% if active_status == 'ALL' %}background: rgba(255, 255, 255, 0.15); color: #fff; font-weight: 700;{% endif %}">
+          All Statuses ({{ mapping_counts.ALL }})
+        </a>
+        <a href="/mappings?view_mode=list&status_filter=APPROVED{% if active_framework != 'ALL' %}&framework={{ active_framework }}{% endif %}" class="badge-tag" style="padding: 0.35rem 0.75rem; border-radius: var(--radius-full); font-size: 0.78rem; {% if active_status == 'APPROVED' %}background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: rgba(16, 185, 129, 0.4); font-weight: 700;{% endif %}">
+          Approved ({{ mapping_counts.APPROVED }})
+        </a>
+        <a href="/mappings?view_mode=list&status_filter=PROPOSED{% if active_framework != 'ALL' %}&framework={{ active_framework }}{% endif %}" class="badge-tag" style="padding: 0.35rem 0.75rem; border-radius: var(--radius-full); font-size: 0.78rem; {% if active_status == 'PROPOSED' %}background: rgba(245, 158, 11, 0.2); color: #fbbf24; border-color: rgba(245, 158, 11, 0.4); font-weight: 700;{% endif %}">
+          Proposed ({{ mapping_counts.PROPOSED }})
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="grc-table-container">
+    <table class="grc-table">
+      <thead>
+        <tr>
+          <th style="width: 15%;">Control</th>
+          <th style="width: 20%;">Framework Requirement</th>
+          <th style="width: 32%;">Technical Justification & Rationale</th>
+          <th style="width: 15%;">Governance Status</th>
+          <th style="width: 18%;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if mappings | length == 0 %}
+        <tr>
+          <td colspan="5" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+            No cross-framework mappings match the selected filter.
+          </td>
+        </tr>
+        {% else %}
+        {% for m in mappings %}
+        <tr>
+          <td>
+            <a href="/controls/{{ m.control.control_id }}" style="font-weight: 700; font-family: var(--font-mono); color: var(--accent-cyan); display: block;">
+              {{ m.control.control_id }}
+            </a>
+            <span style="font-size: 0.8rem; color: var(--text-muted);">
+              {{ m.control.name }}
+            </span>
+          </td>
+          <td>
+            <div style="display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.2rem;">
+              <span class="matrix-chip {% if m.requirement.framework.code == 'SOC2' %}matrix-chip-soc2{% elif m.requirement.framework.code == 'ISO27001' %}matrix-chip-iso{% else %}matrix-chip-nist{% endif %}" style="margin: 0; padding: 0.15rem 0.45rem; font-size: 0.7rem;">
+                {{ m.requirement.framework.code }}
+              </span>
+              <strong style="font-family: var(--font-mono); font-size: 0.84rem; color: #fff;">
+                {{ m.requirement.identifier }}
+              </strong>
+            </div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary);">
+              {{ m.requirement.title }}
+            </div>
+          </td>
+          <td>
+            <p style="font-size: 0.84rem; line-height: 1.45; color: var(--text-secondary);">
+              {{ m.mapping_rationale }}
+            </p>
+            {% if m.reviewed_by %}
+            <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.3rem;">
+              Reviewed by <strong>{{ m.reviewed_by.full_name }}</strong> on {{ m.reviewed_at.strftime('%b %d, %Y') if m.reviewed_at else '' }}
+            </div>
+            {% endif %}
+          </td>
+          <td>
+            {% if m.approval_status.value == 'APPROVED' %}
+            <span class="badge-tag status-pill-IMPLEMENTED" style="margin: 0;">Approved</span>
+            {% elif m.approval_status.value == 'PROPOSED' %}
+            <span class="badge-tag status-pill-PARTIALLY_IMPLEMENTED" style="margin: 0;">Proposed</span>
+            {% elif m.approval_status.value == 'UNDER_REVIEW' %}
+            <span class="badge-tag status-pill-NEEDS_IMPROVEMENT" style="margin: 0;">Under Review</span>
+            {% else %}
+            <span class="badge-tag status-pill-NOT_IMPLEMENTED" style="margin: 0;">Rejected</span>
+            {% endif %}
+          </td>
+          <td>
+            <div style="display: flex; gap: 0.4rem; align-items: center;">
+              {% if user and user.role.value in ['ORG_ADMIN', 'GRC_ANALYST', 'PLATFORM_ADMIN'] %}
+                {% if m.approval_status.value != 'APPROVED' %}
+                <form method="POST" action="/mappings/{{ m.id }}/review" style="display: inline;">
+                  <input type="hidden" name="action" value="APPROVE">
+                  <button type="submit" style="padding: 0.3rem 0.6rem; background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16, 185, 129, 0.4); border-radius: var(--radius-sm); color: #34d399; font-size: 0.75rem; font-weight: 600; cursor: pointer;">
+                    Approve
+                  </button>
+                </form>
+                {% endif %}
+                {% if m.approval_status.value != 'REJECTED' %}
+                <form method="POST" action="/mappings/{{ m.id }}/review" style="display: inline;">
+                  <input type="hidden" name="action" value="REJECT">
+                  <button type="submit" style="padding: 0.3rem 0.6rem; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-sm); color: #f87171; font-size: 0.75rem; font-weight: 600; cursor: pointer;">
+                    Reject
+                  </button>
+                </form>
+                {% endif %}
+                <form method="POST" action="/mappings/{{ m.id }}/delete" style="display: inline;" onsubmit="return confirm('Remove this mapping?');">
+                  <button type="submit" style="padding: 0.3rem 0.5rem; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: var(--text-muted); font-size: 0.75rem; cursor: pointer;">
+                    &times;
+                  </button>
+                </form>
+              {% else %}
+                <span style="font-size: 0.75rem; color: var(--text-muted);">View only</span>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+
+<!-- ========================================================================= -->
+<!-- Modal: Propose / Create Control Mapping                                    -->
+<!-- ========================================================================= -->
+<div id="mappingModal" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); backdrop-filter: var(--glass-blur); z-index: 200; align-items: center; justify-content: center; padding: 1.5rem;">
+  <div class="glass-card" style="width: 100%; max-width: 620px; max-height: 90vh; overflow-y: auto; padding: 2rem;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.75rem;">
+      <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff;">Map Internal Control to Standard</h3>
+      <button onclick="closeMappingModal()" style="background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
+    </div>
+
+    <form method="POST" action="/mappings" style="display: flex; flex-direction: column; gap: 1.15rem;">
+      <div>
+        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">
+          Select Organizational Control
+        </label>
+        <select name="control_id" required style="width: 100%; padding: 0.65rem; background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; font-size: 0.88rem;">
+          {% for c in controls %}
+          <option value="{{ c.id }}">{{ c.control_id }} &bull; {{ c.name }} ({{ c.implementation_status.value }})</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">
+          Select Framework Requirement / Control Objective
+        </label>
+        <select name="requirement_id" required style="width: 100%; padding: 0.65rem; background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; font-size: 0.88rem;">
+          {% for r in requirements %}
+          <option value="{{ r.id }}">
+            [{{ r.framework.code }}] {{ r.identifier }} - {{ r.title }} ({{ r.category }})
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">
+          Mapping Technical Justification & Rationale
+        </label>
+        <textarea
+          name="mapping_rationale"
+          required
+          rows="3"
+          placeholder="Explain precisely how this internal control fulfills the technical criteria or objective of the framework requirement..."
+          style="width: 100%; padding: 0.65rem; background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; font-size: 0.88rem; line-height: 1.4;"
+        ></textarea>
+      </div>
+
+      {% if user and user.role.value in ['ORG_ADMIN', 'GRC_ANALYST', 'PLATFORM_ADMIN'] %}
+      <div>
+        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">
+          Initial Approval Status
+        </label>
+        <select name="approval_status" style="width: 100%; padding: 0.65rem; background: rgba(10, 14, 23, 0.8); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; font-size: 0.88rem;">
+          <option value="APPROVED" selected>Approved (Sign-off as GRC Analyst/Admin)</option>
+          <option value="PROPOSED">Proposed (Pending Further Governance Review)</option>
+          <option value="UNDER_REVIEW">Under Review</option>
+        </select>
+      </div>
+      {% endif %}
+
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1rem;">
+        <button type="button" onclick="closeMappingModal()" style="padding: 0.65rem 1.25rem; background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; cursor: pointer;">
+          Cancel
+        </button>
+        <button type="submit" style="padding: 0.65rem 1.25rem; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-indigo)); border: none; border-radius: var(--radius-sm); color: #fff; font-weight: 700; cursor: pointer;">
+          Save Mapping
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openMappingModal() {
+  document.getElementById('mappingModal').style.display = 'flex';
+}
+function closeMappingModal() {
+  document.getElementById('mappingModal').style.display = 'none';
+}
+</script>
+{% endblock %}

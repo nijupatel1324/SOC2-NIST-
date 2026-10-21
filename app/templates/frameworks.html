@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block title %}Framework Comparison: SOC 2 vs ISO 27001 vs NIST CSF 2.0{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+    <div>
+      <div class="hero-pill" style="margin-bottom: 0.5rem;">
+        Module A &bull; Framework Comparative Intelligence
+      </div>
+      <h1 style="font-size: 2.2rem; font-weight: 800; letter-spacing: -0.02em;">
+        SOC 2 vs ISO/IEC 27001:2022 vs NIST CSF 2.0
+      </h1>
+      <p style="color: var(--text-secondary); max-width: 800px; margin-top: 0.25rem;">
+        Understanding the distinct scopes, assurance paradigms, governance lifecycles, and control overlaps across the three leading cybersecurity frameworks.
+      </p>
+    </div>
+    <div>
+      <a href="/controls" class="nav-link" style="background: linear-gradient(135deg, var(--accent-cyan), var(--accent-indigo)); color: #fff; padding: 0.6rem 1.2rem; border-radius: var(--radius-sm); font-weight: 700; display: inline-flex; align-items: center; gap: 0.5rem;">
+        View Controls Library &rarr;
+      </a>
+    </div>
+  </div>
+
+  <!-- Framework Executive Cards -->
+  <div class="framework-grid" style="margin-bottom: 2.5rem;">
+    <!-- SOC 2 Card -->
+    <div class="glass-card framework-card soc2">
+      <span class="card-badge badge-soc2">AICPA Standard</span>
+      <h3 class="card-title">SOC 2 (TSC)</h3>
+      <p class="card-desc">
+        {{ comparison.framework_details.soc2.type }}
+      </p>
+      <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem; border-left: 2px solid var(--accent-cyan); padding-left: 0.75rem;">
+        <strong>Type I vs Type II:</strong> {{ comparison.framework_details.soc2.type1_vs_type2 }}
+      </div>
+      <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem;">
+        Key Criteria Categories:
+      </div>
+      <ul class="card-features">
+        {% for comp in comparison.framework_details.soc2.key_components %}
+        <li>
+          <svg viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>
+          {{ comp }}
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <!-- ISO 27001 Card -->
+    <div class="glass-card framework-card iso27001">
+      <span class="card-badge badge-iso">International Standard</span>
+      <h3 class="card-title">ISO/IEC 27001:2022</h3>
+      <p class="card-desc">
+        {{ comparison.framework_details.iso27001.type }}
+      </p>
+      <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem; border-left: 2px solid var(--accent-purple); padding-left: 0.75rem;">
+        <strong>Statement of Applicability (SoA):</strong> {{ comparison.framework_details.iso27001.soa_explanation }}
+      </div>
+      <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem;">
+        Structure & Annex A (93 Controls):
+      </div>
+      <ul class="card-features">
+        {% for comp in comparison.framework_details.iso27001.key_components %}
+        <li>
+          <svg viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>
+          {{ comp }}
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <!-- NIST CSF 2.0 Card -->
+    <div class="glass-card framework-card nist">
+      <span class="card-badge badge-nist">NIST Guidance (Voluntary)</span>
+      <h3 class="card-title">NIST CSF 2.0</h3>
+      <p class="card-desc">
+        {{ comparison.framework_details.nist_csf.type }}
+      </p>
+      <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem; border-left: 2px solid var(--accent-emerald); padding-left: 0.75rem;">
+        <strong>CSF 2.0 Evolution:</strong> {{ comparison.framework_details.nist_csf.govern_addition }}
+      </div>
+      <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem;">
+        The 6 Core Functions:
+      </div>
+      <ul class="card-features">
+        {% for comp in comparison.framework_details.nist_csf.key_components %}
+        <li>
+          <svg viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>
+          {{ comp }}
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <!-- Side-by-Side Deep Comparison Table -->
+  <div class="status-section" style="margin-bottom: 2.5rem;">
+    <div class="section-header">
+      <div class="section-title">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="color: var(--accent-cyan);">
+          <path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z"/>
+        </svg>
+        Multi-Dimensional Comparison Matrix
+      </div>
+      <span class="badge-tag" style="color: #38bdf8; border-color: rgba(56, 189, 248, 0.4);">
+        7 Comparative Dimensions
+      </span>
+    </div>
+
+    <div style="overflow-x: auto;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem; text-align: left;">
+        <thead>
+          <tr style="border-bottom: 1px solid var(--border-subtle); background: rgba(255, 255, 255, 0.02);">
+            <th style="padding: 1rem; color: var(--text-muted); width: 20%;">Dimension</th>
+            <th style="padding: 1rem; color: #38bdf8; width: 26%;">SOC 2 (AICPA)</th>
+            <th style="padding: 1rem; color: #c084fc; width: 27%;">ISO/IEC 27001:2022</th>
+            <th style="padding: 1rem; color: #34d399; width: 27%;">NIST CSF 2.0</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in comparison.dimensions %}
+          <tr style="border-bottom: 1px solid var(--border-subtle); transition: var(--transition-smooth);" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
+            <td style="padding: 1.1rem 1rem; font-weight: 700; color: var(--text-primary); vertical-align: top;">
+              {{ row.dimension }}
+            </td>
+            <td style="padding: 1.1rem 1rem; color: var(--text-secondary); vertical-align: top; line-height: 1.5;">
+              {{ row.soc2 }}
+            </td>
+            <td style="padding: 1.1rem 1rem; color: var(--text-secondary); vertical-align: top; line-height: 1.5;">
+              {{ row.iso27001 }}
+            </td>
+            <td style="padding: 1.1rem 1rem; color: var(--text-secondary); vertical-align: top; line-height: 1.5;">
+              {{ row.nist_csf }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Key Overlaps Section -->
+  <div style="margin-bottom: 2.5rem;">
+    <div style="margin-bottom: 1.25rem;">
+      <h2 style="font-size: 1.45rem; font-weight: 800; display: flex; align-items: center; gap: 0.6rem;">
+        <span style="color: var(--accent-emerald);">&bull;</span>
+        Critical Areas of Framework Overlap
+      </h2>
+      <p style="color: var(--text-secondary); font-size: 0.88rem;">
+        How a single robust technical safeguard satisfies multiple framework requirements simultaneously.
+      </p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 1.25rem;">
+      {% for overlap in comparison.overlaps %}
+      <div class="glass-card" style="padding: 1.5rem;">
+        <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--text-primary);">
+          {{ overlap.topic }}
+        </h3>
+        <p style="font-size: 0.86rem; color: var(--text-secondary); margin-bottom: 1rem; line-height: 1.5;">
+          {{ overlap.overlap_summary }}
+        </p>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; border-top: 1px solid var(--border-subtle); padding-top: 0.75rem;">
+          <span class="badge-tag" style="color: #38bdf8; border-color: rgba(56, 189, 248, 0.3);">
+            SOC 2: {{ overlap.soc2_ref }}
+          </span>
+          <span class="badge-tag" style="color: #c084fc; border-color: rgba(168, 85, 247, 0.3);">
+            ISO: {{ overlap.iso27001_ref }}
+          </span>
+          <span class="badge-tag" style="color: #34d399; border-color: rgba(16, 185, 129, 0.3);">
+            NIST: {{ overlap.nist_csf_ref }}
+          </span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Requirements Explorer -->
+  <div class="status-section">
+    <div class="section-header">
+      <div class="section-title">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="color: var(--accent-purple);">
+          <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+        </svg>
+        Framework Requirements Catalog ({{ frameworks | length }} Frameworks &bull; 33 Requirements)
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+      {% for fw in frameworks %}
+      <div>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">
+          <div style="font-weight: 700; font-size: 1.05rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
+            <span>{{ fw.name }}</span>
+            <span class="badge-tag">{{ fw.version }}</span>
+          </div>
+          <span style="font-size: 0.8rem; color: var(--text-muted);">{{ fw.requirements | length }} criteria registered</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 0.85rem;">
+          {% for req in fw.requirements %}
+          <div style="background: rgba(10, 14, 23, 0.6); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 1rem;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem;">
+              <span style="font-family: var(--font-mono); font-weight: 700; font-size: 0.88rem; color: var(--accent-cyan);">
+                {{ req.identifier }}
+              </span>
+              <span class="badge-tag" style="margin: 0; font-size: 0.7rem;">
+                {{ req.category }}
+              </span>
+            </div>
+            <div style="font-weight: 600; font-size: 0.88rem; margin-bottom: 0.35rem; color: var(--text-primary);">
+              {{ req.title }}
+            </div>
+            <p style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.4;">
+              {{ req.description }}
+            </p>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
